@@ -17,7 +17,10 @@ let camera = {
     moveRight : false,
     moveUp : false,
     moveDown : false,
-    speed : 10
+    speed : 10,
+    tileScale : 1,
+    mouseX : null,
+    mouseY : null,
 };
 
 const gameMap = [
@@ -28,7 +31,6 @@ const gameMap = [
 ];
 const tileWidth = 32;
 const tileHeight = 16;
-const tileScale = 1;
 
 // direction: 1 grows up, -1 grows down
 const tileTranslation = [
@@ -42,24 +44,31 @@ const tileTranslation = [
     // 1
     {
         x : 0,
-        y: 16,
-        width: tileWidth,
-        height: tileHeight,
+        y : 16,
+        width : tileWidth,
+        height : tileHeight,
     },
     // 2
     {
         x : 32,
-        y: 32,
-        width: tileWidth,
-        height: tileHeight * 2,
+        y : 32,
+        width : tileWidth,
+        height : tileHeight * 2,
         displacement : -tileHeight
     },
     // 3
     {
         x : 0,
-        y: 32,
-        width: tileWidth,
-        height: tileHeight * 2,
+        y : 32,
+        width : tileWidth,
+        height : tileHeight * 2
+    },
+    // 4
+    {
+        x : 32,
+        y : 0,
+        width : tileWidth,
+        height : tileHeight
     }
 ];
 
@@ -77,6 +86,9 @@ function init() {
     canvas = document.querySelector("canvas");
     context = canvas.getContext("2d");
 
+    context.imageSmoothingEnabled = false;
+
+    window.addEventListener("mousemove", mousemove, false);
     window.addEventListener("keyup", keyup, false);
     window.addEventListener("keydown", keydown, false);
 
@@ -98,49 +110,83 @@ function draw() {
 
     context.clearRect(0, 0, canvas.width, canvas.height);
     // background
-    context.fillStyle = "#606060"; 
+    context.fillStyle = "#707070"; 
     context.fillRect(0, 0, canvas.width, canvas.height);
+    context.save()
+    context.translate(camera.x, camera.y);
     for (let r = 0; r < gameMap.length; r+=1) {
         for (let c = 0; c < gameMap[r].length; c+=1) {
             let tile = tileTranslation[gameMap[r][c]];
             if (tile) {
-                let realX = 0.5 * (canvas.width - tileWidth ) + 0.5 * (c - r) * tileWidth * tileScale; 
-                let realY = 0.5 * (c + r) * tileHeight * tileScale;
+                const realX = 0.5 * (canvas.width - tileWidth * camera.tileScale ) + 0.5 * (c - r) * tileWidth * camera.tileScale; 
+                const realY = 0.5 * (c + r) * tileHeight * camera.tileScale;
 
-                // offset for camera
-                realX += camera.x;
-                realY += camera.y;
-
-                tile.displacement ??= 0;
                 context.drawImage(
                     spriteMap,
                     tile.x, tile.y, tile.width, tile.height,
-                    realX, realY + tile.displacement, tile.width * tileScale, tile.height * tileScale
+                    realX, realY + (tile.displacement ?? 0) * camera.tileScale, tile.width * camera.tileScale, tile.height * camera.tileScale
                 );
             }
         }
     }
 
+    // tile selection
+
+    // realX = 0.5 * (canvas.width - tileWidth * camera.tileScale ) + 0.5 * (c - r) * tileWidth * camera.tileScale;
+    // realX = 0.5 * (canvas.width - tileWidth * camera.tileScale + (c - r) * tileWidth * camera.tileScale)
+    // (2 * realX - canvas.width - tileWidth * camera.tileScale) / (tileWidth * camera.tileScale) =  c - r
+
+    // realY = 0.5 * (c + r) * tileHeight * camera.tileScale;
+    // (2 * realY) / (tileHeight * camera.tileScale) = c + r
+
+    // const c = (2 * realX - canvas.width - tileWidth * camera.tileScale + 2 * realY) / (tileHeight * camera.tileScale)
+
+    const tile = tileTranslation[4];
+    // context.fillStyle = "yellow";
+    // context.fillRect(
+    //     camera.mouseX,
+    //     camera.mouseY,
+    //     1,
+    //     1
+    // );
+    context.drawImage(
+        spriteMap,
+        tile.x, tile.y, tile.width, tile.height,
+        camera.mouseX - ((camera.mouseX + tileWidth / 2) % (tileWidth * camera.tileScale)),
+        camera.mouseY - (camera.mouseY % (tileHeight * camera.tileScale)) + (tile.displacement ?? 0) * camera.tileScale, tile.width * camera.tileScale, tile.height * camera.tileScale
+    );
+
     // player
     context.fillStyle = "red";
     context.fillRect(
-        0.5 * ( canvas.width - player.width) + 0.5 * ( player.position.x - player.position.y) * tileWidth * tileScale + camera.x,
-        0.5 * tileHeight + 0.5 * ( player.position.x + player.position.y ) * tileHeight * tileScale - player.height + camera.y,
-        player.width,
-        player.height
+        0.5 * ( canvas.width - player.width * camera.tileScale) + 0.5 * ( player.position.x - player.position.y) * tileWidth * camera.tileScale,
+        0.5 * tileHeight * camera.tileScale + 0.5 * ( player.position.x + player.position.y ) * (tileHeight - player.height) * camera.tileScale,
+        player.width * camera.tileScale,
+        player.height * camera.tileScale
     );
     
     // camera
     if (camera.moveLeft) {
         camera.x -= camera.speed;
+        camera.mouseX += camera.speed;
     } else if (camera.moveRight) {
         camera.x += camera.speed;
+        camera.mouseX -= camera.speed;
     } else if (camera.moveUp) {
         camera.y += camera.speed;
+        camera.mouseY -= camera.speed;
     } else if (camera.moveDown) {
         camera.y -= camera.speed;
+        camera.mouseY += camera.speed;
     }
 
+    context.restore();
+
+}
+
+function mousemove(event) {
+    camera.mouseX = event.clientX - canvas.offsetLeft - camera.x;
+    camera.mouseY = event.clientY - canvas.offsetTop - camera.y;
 }
 
 function keydown(event) {
@@ -174,6 +220,10 @@ function keyup(event) {
         camera.moveUp = false;
     } else if (key === "ArrowDown") {
         camera.moveDown = false;
+    } else if (key === "+") {
+        camera.tileScale += 1;
+    } else if (key === "-" && camera.tileScale > 1) {
+        camera.tileScale -= 1;
     }
 }
 

@@ -10,6 +10,15 @@ let player = {
     width : 8,
     height : 16,
 };
+let camera = {
+    x : 0,
+    y : 0,
+    moveLeft : false,
+    moveRight : false,
+    moveUp : false,
+    moveDown : false,
+    speed : 10
+};
 
 const gameMap = [
         [1,1,2],
@@ -29,7 +38,6 @@ const tileTranslation = [
         y : 0,
         width : tileWidth,
         height : tileHeight,
-        direction : 1
     },
     // 1
     {
@@ -37,7 +45,6 @@ const tileTranslation = [
         y: 16,
         width: tileWidth,
         height: tileHeight,
-        direction : 1
     },
     // 2
     {
@@ -45,7 +52,7 @@ const tileTranslation = [
         y: 32,
         width: tileWidth,
         height: tileHeight * 2,
-        direction : 1
+        displacement : -tileHeight
     },
     // 3
     {
@@ -53,7 +60,6 @@ const tileTranslation = [
         y: 32,
         width: tileWidth,
         height: tileHeight * 2,
-        direction : 0
     }
 ];
 
@@ -72,6 +78,7 @@ function init() {
     context = canvas.getContext("2d");
 
     window.addEventListener("keyup", keyup, false);
+    window.addEventListener("keydown", keydown, false);
 
     load_assets([
             {var : spriteMap, url : "static/spritemap.png"}
@@ -97,12 +104,18 @@ function draw() {
         for (let c = 0; c < gameMap[r].length; c+=1) {
             let tile = tileTranslation[gameMap[r][c]];
             if (tile) {
-                const realX = 0.5 * canvas.width - 0.5 * tileWidth + 0.5 * (c - r) * tileWidth * tileScale; 
-                const realY = 0.5 * (c + r) * tileHeight * tileScale;
+                let realX = 0.5 * (canvas.width - tileWidth ) + 0.5 * (c - r) * tileWidth * tileScale; 
+                let realY = 0.5 * (c + r) * tileHeight * tileScale;
+
+                // offset for camera
+                realX += camera.x;
+                realY += camera.y;
+
+                tile.displacement ??= 0;
                 context.drawImage(
                     spriteMap,
                     tile.x, tile.y, tile.width, tile.height,
-                    realX, realY + tile.direction * (tileHeight - tile.height), tile.width * tileScale, tile.height * tileScale
+                    realX, realY + tile.displacement, tile.width * tileScale, tile.height * tileScale
                 );
             }
         }
@@ -111,24 +124,56 @@ function draw() {
     // player
     context.fillStyle = "red";
     context.fillRect(
-        0.5 * ( canvas.width - player.width) + 0.5 * ( player.position.x - player.position.y) * tileWidth * tileScale,
-        0.5 * tileHeight + 0.5 * ( player.position.x + player.position.y ) * tileHeight * tileScale - player.height,
+        0.5 * ( canvas.width - player.width) + 0.5 * ( player.position.x - player.position.y) * tileWidth * tileScale + camera.x,
+        0.5 * tileHeight + 0.5 * ( player.position.x + player.position.y ) * tileHeight * tileScale - player.height + camera.y,
         player.width,
         player.height
     );
+    
+    // camera
+    if (camera.moveLeft) {
+        camera.x -= camera.speed;
+    } else if (camera.moveRight) {
+        camera.x += camera.speed;
+    } else if (camera.moveUp) {
+        camera.y += camera.speed;
+    } else if (camera.moveDown) {
+        camera.y -= camera.speed;
+    }
+
+}
+
+function keydown(event) {
+    let key = event.key; 
+    if ( key === "ArrowLeft" || 
+         key === "ArrowRight" || 
+         key === "ArrowUp" || 
+         key === "ArrowDown"
+       ) {
+        event.preventDefault();
+    }
+
+    if (key === "ArrowLeft") {
+        camera.moveLeft = true;
+    } else if (key === "ArrowRight") {
+        camera.moveRight = true;
+    } else if (key === "ArrowUp") {
+        camera.moveUp = true;
+    } else if (key === "ArrowDown") {
+        camera.moveDown = true;
+    }
 }
 
 function keyup(event) {
     let key = event.key;
-    event.preventDefault();
-    if (key === "ArrowUp") {
-        player.position.y -= 1;
-    } else if (key === "ArrowDown") {
-        player.position.y += 1;
-    } else if (key === "ArrowLeft") {
-        player.position.x -= 1;
+    if (key === "ArrowLeft") {
+        camera.moveLeft = false;
     } else if (key === "ArrowRight") {
-        player.position.x += 1;
+        camera.moveRight = false;
+    } else if (key === "ArrowUp") {
+        camera.moveUp = false;
+    } else if (key === "ArrowDown") {
+        camera.moveDown = false;
     }
 }
 

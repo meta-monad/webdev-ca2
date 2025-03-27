@@ -1,4 +1,4 @@
-async function makeRequest(url, data, successCallback, failCallback) {
+async function makeRequest(url, data) {
     // let xhttp = new XMLHttpRequest();
     // xhttp.addEventListener("readystatechange", readystatechange(xhttp, successCallback, failCallback), false);
     // xhttp.open("POST", url, true);
@@ -7,6 +7,7 @@ async function makeRequest(url, data, successCallback, failCallback) {
         method: "POST",
         body : data
     });
+    return response;
 }
 
 function readystatechange(xhttp, successCallback, failCallback) {

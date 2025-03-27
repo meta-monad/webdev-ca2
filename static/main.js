@@ -100,14 +100,28 @@ function init() {
     let data = new FormData();
     data.append("game_id", 1);
     data.append("player_name", "user");
-    makeRequest("/begin_session", data,
-        (response) => console.log("response:", response),
-        () => console.log("bad request")
-    );
-
-    load_assets([
-            {var : spriteMap, url : "static/spritemap.png"}
-    ], draw);
+    makeRequest("/begin_session", data)
+        .then((response) => {
+            if (response.ok) {
+                return response.text()
+            } else {
+                throw new Error("bad request")
+            }
+        })
+        .then((response) => {
+            if (response != "success") {
+                throw new Error("bad request")
+            }
+        })
+        .then((response) => {
+            console.log("response:", response);
+            load_assets([
+                {var : spriteMap, url : "static/spritemap.png"}
+            ], draw);
+        })
+        .catch((error) => {
+            console.error("bad request")
+        })
 }
 
 function draw() {

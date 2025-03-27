@@ -1,3 +1,7 @@
+import { drawMap, drawPlayer, drawSelection } from "/static/renderer.js";
+import { processCamera } from "/static/game.js";
+import { makeRequest } from "/static/network.js";
+
 let canvas;
 let context;
 
@@ -76,6 +80,7 @@ const tileTranslation = [
 // let now;
 let then = Date.now();
 const fpsInterval = 1000 / 30; // 30 frames per 1000 milliseconds
+let gameTick = 0;
 
 // sprites
 let spriteMap = new Image();
@@ -91,6 +96,14 @@ function init() {
     window.addEventListener("mousemove", mousemove, false);
     window.addEventListener("keyup", keyup, false);
     window.addEventListener("keydown", keydown, false);
+
+    let data = new FormData();
+    data.append("game_id", 1);
+    data.append("player_name", "user");
+    makeRequest("/begin_session", data,
+        (response) => console.log("response:", response),
+        () => console.log("bad request")
+    );
 
     load_assets([
             {var : spriteMap, url : "static/spritemap.png"}
@@ -108,80 +121,28 @@ function draw() {
     }
     then = now - (delta % fpsInterval);
 
-    context.clearRect(0, 0, canvas.width, canvas.height);
     // background
+    context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#707070"; 
     context.fillRect(0, 0, canvas.width, canvas.height);
+
+    // camera displacement
     context.save()
     context.translate(camera.x, camera.y);
-    for (let r = 0; r < gameMap.length; r+=1) {
-        for (let c = 0; c < gameMap[r].length; c+=1) {
-            let tile = tileTranslation[gameMap[r][c]];
-            if (tile) {
-                const realX = 0.5 * (canvas.width - tileWidth * camera.tileScale ) + 0.5 * (c - r) * tileWidth * camera.tileScale; 
-                const realY = 0.5 * (c + r) * tileHeight * camera.tileScale;
 
-                context.drawImage(
-                    spriteMap,
-                    tile.x, tile.y, tile.width, tile.height,
-                    realX, realY + (tile.displacement ?? 0) * camera.tileScale, tile.width * camera.tileScale, tile.height * camera.tileScale
-                );
-            }
-        }
-    }
+    // draw game map
+    drawMap(context, camera, gameMap, tileTranslation, spriteMap, canvas.width, tileWidth, tileHeight);
 
     // tile selection
-
-    // realX = 0.5 * (canvas.width - tileWidth * camera.tileScale ) + 0.5 * (c - r) * tileWidth * camera.tileScale;
-    // realX = 0.5 * (canvas.width - tileWidth * camera.tileScale + (c - r) * tileWidth * camera.tileScale)
-    // (2 * realX - canvas.width - tileWidth * camera.tileScale) / (tileWidth * camera.tileScale) =  c - r
-
-    // realY = 0.5 * (c + r) * tileHeight * camera.tileScale;
-    // (2 * realY) / (tileHeight * camera.tileScale) = c + r
-
-    // const c = (2 * realX - canvas.width - tileWidth * camera.tileScale + 2 * realY) / (tileHeight * camera.tileScale)
-
-    const tile = tileTranslation[4];
-    // context.fillStyle = "yellow";
-    // context.fillRect(
-    //     camera.mouseX,
-    //     camera.mouseY,
-    //     1,
-    //     1
-    // );
-    context.drawImage(
-        spriteMap,
-        tile.x, tile.y, tile.width, tile.height,
-        camera.mouseX - ((camera.mouseX + tileWidth / 2) % (tileWidth * camera.tileScale)),
-        camera.mouseY - (camera.mouseY % (tileHeight * camera.tileScale)) + (tile.displacement ?? 0) * camera.tileScale, tile.width * camera.tileScale, tile.height * camera.tileScale
-    );
+    drawSelection(context, camera, gameMap, tileTranslation, spriteMap, canvas.width, tileWidth, tileHeight);
 
     // player
-    context.fillStyle = "red";
-    context.fillRect(
-        0.5 * ( canvas.width - player.width * camera.tileScale) + 0.5 * ( player.position.x - player.position.y) * tileWidth * camera.tileScale,
-        0.5 * tileHeight * camera.tileScale + 0.5 * ( player.position.x + player.position.y ) * (tileHeight - player.height) * camera.tileScale,
-        player.width * camera.tileScale,
-        player.height * camera.tileScale
-    );
+    drawPlayer(context, camera, player, tileWidth, tileHeight, canvas.width);
     
     // camera
-    if (camera.moveLeft) {
-        camera.x -= camera.speed;
-        camera.mouseX += camera.speed;
-    } else if (camera.moveRight) {
-        camera.x += camera.speed;
-        camera.mouseX -= camera.speed;
-    } else if (camera.moveUp) {
-        camera.y += camera.speed;
-        camera.mouseY -= camera.speed;
-    } else if (camera.moveDown) {
-        camera.y -= camera.speed;
-        camera.mouseY += camera.speed;
-    }
+    processCamera(camera);
 
     context.restore();
-
 }
 
 function mousemove(event) {

@@ -1,0 +1,14 @@
+For drawing isometric textures
+
+https://imgur.com/gallery/isometry-guide-beginners-bonus-guides-zkw0zJq
+
+JavaScript
+
+https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values
+https://developer.mozilla.org/en-US/docs/Games/Tutorials/2D_Breakout_game_pure_JavaScript/Mouse_controls
+https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing
+https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/save
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules
+https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Async_JS - entire series
+https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API - entire series

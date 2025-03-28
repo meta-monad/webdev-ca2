@@ -34,8 +34,12 @@ def begin_session():
     session.modified = True
     return "success"
 
-@app.route("/end_session", methods=["POST"])
-def end_sessions():
+@app.route("/end_session", methods=["GET"])
+def end_session():
+    if gid := session.get("game_id", None):
+        gamesessions[gid]["players"].remove(session["player_name"])
+        if not gamesessions[gid]["players"]:
+            gamesessions.pop(gid)
     session.clear()
     session.modified = True
     return "success"

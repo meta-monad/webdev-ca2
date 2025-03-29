@@ -23,15 +23,14 @@ function drawMap(context, camera, gameMap, tileTranslation, spriteMap, canvasWid
 function drawPlayer(context, camera, player, tileWidth, tileHeight, canvasWidth) {
     context.fillStyle = "red";
     context.fillRect(
-        0.5 * ( canvasWidth - player.width * camera.tileScale) + 0.5 * ( player.position.x - player.position.y) * tileWidth * camera.tileScale,
-        0.5 * tileHeight * camera.tileScale + 0.5 * ( player.position.x + player.position.y ) * tileHeight * camera.tileScale - player.height,
+        0.5 * ( canvasWidth - player.width * camera.tileScale) + 0.5 * ( player.position.y - player.position.x ) * tileWidth * camera.tileScale,
+        0.5 * tileHeight * camera.tileScale + 0.5 * ( player.position.y + player.position.x ) * tileHeight * camera.tileScale - player.height * camera.tileScale,
         player.width * camera.tileScale,
         player.height * camera.tileScale
     );
 }
 
-function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, canvasWidth, tileWidth, tileHeight) {
-
+function getMouseTile(camera, canvasWidth, tileWidth, tileHeight) {
     // math
     // realX = 0.5 * (canvas.width - tileWidth * camera.tileScale ) + 0.5 * (c - r) * tileWidth * camera.tileScale;
     // realX = 0.5 * (canvas.width - tileWidth * camera.tileScale + (c - r) * tileWidth * camera.tileScale)
@@ -42,19 +41,26 @@ function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, can
 
     // to obtain c & r, we resolve the system of equations by summation/subtraction and dividing by 2/-2
 
+    let r = (
+        camera.mouseX - ((tileWidth * camera.tileScale ) / 2)
+        - 0.5 * (canvasWidth - tileWidth * camera.tileScale)
+        - 2 * camera.mouseY + (tileHeight * camera.tileScale)
+    ) / (-2 * tileHeight * camera.tileScale);
     let c = (
         camera.mouseX
         + 2 * camera.mouseY
         - (canvasWidth / 2)
         - (tileHeight * camera.tileScale )
     ) / (2 * tileHeight * camera.tileScale);
-    let r = (
-        camera.mouseX - ((tileWidth * camera.tileScale ) / 2)
-        - 0.5 * (canvasWidth - tileWidth * camera.tileScale)
-        - 2 * camera.mouseY + (tileHeight * camera.tileScale)
-    ) / (-2 * tileHeight * camera.tileScale);
-    c = Math.round(c);
     r = Math.round(r);
+    c = Math.round(c);
+
+    return [r, c];
+}
+
+function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, canvasWidth, tileWidth, tileHeight) {
+
+    let [r, c] = getMouseTile(camera, canvasWidth, tileWidth, tileHeight);
 
     // const realX = 0.5 * (canvasWidth - tileWidth * camera.tileScale) + 0.5 * (col - row) * tileWidth * camera.tileScale; 
     // const realY = 0.5 * (c + r) * tileHeight * camera.tileScale;
@@ -80,4 +86,4 @@ function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, can
     return (r, c);
 }
 
-export {drawMap, drawPlayer, drawSelection};
+export { drawTile, drawMap, drawPlayer, getMouseTile, drawSelection };

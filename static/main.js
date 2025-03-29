@@ -1,5 +1,5 @@
-import { drawMap, drawPlayer, drawSelection } from "/static/renderer.js";
-import { processCamera } from "/static/game.js";
+import { drawTile, drawMap, drawPlayer, getMouseTile, drawSelection } from "/static/renderer.js";
+import { processCamera, generatePath } from "/static/game.js";
 import { makeRequest } from "/static/network.js";
 
 let canvas;
@@ -36,8 +36,9 @@ const gameMap = [
 ];
 const tileWidth = 32;
 const tileHeight = 16;
+let path;
 
-// direction: 1 grows up, -1 grows down
+// displacement goes down
 const tileTranslation = [
     // 0
     {
@@ -136,6 +137,7 @@ function game_init(player_name, game_id) {
             context.imageSmoothingEnabled = false;
 
             window.addEventListener("mousemove", mousemove, false);
+            window.addEventListener("click", click, false);
             window.addEventListener("keyup", keyup, false);
             window.addEventListener("keydown", keydown, false);
             load_assets([
@@ -152,7 +154,8 @@ export function setcoords(x, y) {
     player.position.x = x;
     player.position.y = y;
 }
-window.setcoords = setcoords;
+
+globalThis.setcoords = setcoords;
 
 function draw() {
     window.requestAnimationFrame(draw);
@@ -182,6 +185,12 @@ function draw() {
 
     // player
     drawPlayer(context, camera, player, tileWidth, tileHeight, canvas.width);
+
+    // navigated path
+    const tile = tileTranslation[4];
+    for (let [r, c] of path) {
+        drawTile(context, camera, tile, spriteMap, r, c, canvas.width, tileWidth, tileHeight);
+    }
     
     // camera
     processCamera(camera);
@@ -192,6 +201,19 @@ function draw() {
 function mousemove(event) {
     camera.mouseX = event.pageX - canvas.offsetLeft - camera.x;
     camera.mouseY = event.pageY - canvas.offsetTop - camera.y;
+}
+
+function click(event) {
+    console.debug("moved");
+    let dest = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
+
+    path = generatePath(
+        gameMap,
+        tileTranslation,
+        [player.position.x, player.position.y],
+        dest
+    );
+    path.push(dest);
 }
 
 function keydown(event) {

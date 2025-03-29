@@ -22,7 +22,7 @@ def game():
 def begin_session():
     game_id = int(request.form["game_id"])
     player_name = request.form["player_name"]
-    player = Player(player_name, 1, 2) # TODO: spawn positions
+    player = Player(player_name, 2, 1) # TODO: spawn positions
     if game_id not in gamesessions:
         # player starts new game
         gamesessions[game_id] = {

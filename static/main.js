@@ -148,6 +148,12 @@ function game_init(player_name, game_id) {
         })
 }
 
+export function setcoords(x, y) {
+    player.position.x = x;
+    player.position.y = y;
+}
+window.setcoords = setcoords;
+
 function draw() {
     window.requestAnimationFrame(draw);
 

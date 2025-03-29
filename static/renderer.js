@@ -24,7 +24,7 @@ function drawPlayer(context, camera, player, tileWidth, tileHeight, canvasWidth)
     context.fillStyle = "red";
     context.fillRect(
         0.5 * ( canvasWidth - player.width * camera.tileScale) + 0.5 * ( player.position.x - player.position.y) * tileWidth * camera.tileScale,
-        0.5 * tileHeight * camera.tileScale + 0.5 * ( player.position.x + player.position.y ) * (tileHeight - player.height) * camera.tileScale,
+        0.5 * tileHeight * camera.tileScale + 0.5 * ( player.position.x + player.position.y ) * tileHeight * camera.tileScale - player.height,
         player.width * camera.tileScale,
         player.height * camera.tileScale
     );

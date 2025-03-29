@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block head %}
+<script src="{{ url_for('static', filename='main.js') }}" type="module"></script>
+{% endblock %}
+
+{% block body %}
+<section id="join_form">
+    <h1>Join game</h1>
+    <form>
+        <label for"">Player name</label>
+        <input id="player_name" name="player_name" type="text" required />
+        <br />
+        <label for="game_id">Game id</label>
+        <input id="game_id" name="game_id" type="number" required/>
+        <br />
+        <input type="submit" />
+    </form>
+    <p id="error"></p>
+</section>
+<section id="game_area" hidden>
+    <h1>Game</h1>
+    <canvas width=512 height=512></canvas>
+    <p>
+        <a href="{{ url_for('end_session') }}">Quit game</a>
+    </p>
+</section>
+{% endblock %}

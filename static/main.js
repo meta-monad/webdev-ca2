@@ -7,9 +7,10 @@ let context;
 
 // game state information
 let player = {
+    player_name : null,
     position : {
-        x: 1,
-        y: 1
+        x: null,
+        y: null
     },
     width : 8,
     height : 16,
@@ -88,39 +89,62 @@ let spriteMap = new Image();
 document.addEventListener("DOMContentLoaded", init, false);
 
 function init() {
-    canvas = document.querySelector("canvas");
-    context = canvas.getContext("2d");
+    let form = document.querySelector("form");
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
 
-    context.imageSmoothingEnabled = false;
+        let player_name = document.getElementById("player_name").value;
+        let game_id = document.getElementById("game_id").value;
+        game_init(player_name, game_id);
+    });
+}
 
-    window.addEventListener("mousemove", mousemove, false);
-    window.addEventListener("keyup", keyup, false);
-    window.addEventListener("keydown", keydown, false);
-
+function game_init(player_name, game_id) {
     let data = new FormData();
-    data.append("game_id", 1);
-    data.append("player_name", "user");
+    data.append("game_id", game_id);
+    data.append("player_name", player_name);
+
     makeRequest("/begin_session", data)
         .then((response) => {
             if (response.ok) {
-                return response.text()
+                return response.json();
             } else {
-                throw new Error("bad request")
+                throw new Error("bad request");
             }
         })
         .then((response) => {
-            if (response != "success") {
-                throw new Error("bad request")
+            if (response.status != "success") {
+                throw new Error("bad request", {
+                    cause : response.response
+                });
+            } else {
+                return response.response;
             }
         })
         .then((response) => {
-            console.log("response:", response);
+            console.log(response);
+            player.position.x = response.x;
+            player.position.y = response.y;
+            player.player_name = response.player_name;
+
+            document.getElementById("game_area").hidden = false;
+            document.getElementById("join_form").hidden = true;
+
+            canvas = document.querySelector("canvas");
+            context = canvas.getContext("2d");
+
+            context.imageSmoothingEnabled = false;
+
+            window.addEventListener("mousemove", mousemove, false);
+            window.addEventListener("keyup", keyup, false);
+            window.addEventListener("keydown", keydown, false);
             load_assets([
                 {var : spriteMap, url : "static/spritemap.png"}
             ], draw);
         })
         .catch((error) => {
-            console.error("bad request")
+            console.error(error);
+            document.getElementById("error").innerText = `Error: ${error.cause ?? "Server error"}`;
         })
 }
 
@@ -160,8 +184,8 @@ function draw() {
 }
 
 function mousemove(event) {
-    camera.mouseX = event.clientX - canvas.offsetLeft - camera.x;
-    camera.mouseY = event.clientY - canvas.offsetTop - camera.y;
+    camera.mouseX = event.pageX - canvas.offsetLeft - camera.x;
+    camera.mouseY = event.pageY - canvas.offsetTop - camera.y;
 }
 
 function keydown(event) {

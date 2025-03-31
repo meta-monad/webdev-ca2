@@ -70,19 +70,13 @@ function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, can
     // if (r >= 0 && c >= 0&& r < gameMap.length && c < gameMap[r].length && tileTranslation[gameMap[r][c]])
     drawTile(context, camera, tile, spriteMap, r, c, canvasWidth, tileWidth, tileHeight);
 
-    // context.drawImage(
-    //     spriteMap,
-    //     tile.x, tile.y, tile.width, tile.height,
-    //     realX, realY + (tile.displacement ?? 0) * camera.tileScale, tile.width * camera.tileScale, tile.height * camera.tileScale
-    // );
-    
-    context.fillStyle = "yellow";
-    context.fillRect(
-        camera.mouseX,
-        camera.mouseY,
-        1,
-        1
-    );
+    //context.fillStyle = "yellow";
+    //context.fillRect(
+    //    camera.mouseX,
+    //    camera.mouseY,
+    //    1,
+    //    1
+    //);
     return (r, c);
 }
 

@@ -1,6 +1,6 @@
-import { drawTile, drawMap, drawPlayer, getMouseTile, drawSelection } from "/static/renderer.js";
-import { processCamera, generatePath } from "/static/game.js";
-import { makeRequest } from "/static/network.js";
+import { drawTile, drawMap, drawPlayer, getMouseTile, drawSelection } from "./renderer.js";
+import { processCamera, generatePath } from "./game.js";
+import { makeRequest } from "./network.js";
 
 let canvas;
 let context;
@@ -36,7 +36,7 @@ const gameMap = [
 ];
 const tileWidth = 32;
 const tileHeight = 16;
-let path;
+let path = [];
 
 // displacement goes down
 const tileTranslation = [
@@ -46,6 +46,7 @@ const tileTranslation = [
         y : 0,
         width : tileWidth,
         height : tileHeight,
+        traversable : false
     },
     // 1
     {
@@ -53,6 +54,7 @@ const tileTranslation = [
         y : 16,
         width : tileWidth,
         height : tileHeight,
+        traversable : true
     },
     // 2
     {
@@ -60,21 +62,24 @@ const tileTranslation = [
         y : 32,
         width : tileWidth,
         height : tileHeight * 2,
-        displacement : -tileHeight
+        displacement : -tileHeight,
+        traversable : true
     },
     // 3
     {
         x : 0,
         y : 32,
         width : tileWidth,
-        height : tileHeight * 2
+        height : tileHeight * 2,
+        traversable : true
     },
     // 4
     {
         x : 32,
         y : 0,
         width : tileWidth,
-        height : tileHeight
+        height : tileHeight,
+        traversable : false
     }
 ];
 
@@ -82,7 +87,7 @@ const tileTranslation = [
 // let now;
 let then = Date.now();
 const fpsInterval = 1000 / 30; // 30 frames per 1000 milliseconds
-let gameTick = 0;
+let gameTickCounter = 0;
 
 // sprites
 let spriteMap = new Image();
@@ -168,6 +173,10 @@ function draw() {
     }
     then = now - (delta % fpsInterval);
 
+    gameTickCounter += 1;
+    if (gameTickCounter % 3 === 0) { // 100ms
+    }
+
     // background
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#707070"; 
@@ -204,7 +213,6 @@ function mousemove(event) {
 }
 
 function click(event) {
-    console.debug("moved");
     let dest = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
 
     path = generatePath(
@@ -213,7 +221,7 @@ function click(event) {
         [player.position.x, player.position.y],
         dest
     );
-    path.push(dest);
+    path.unshift(dest);
 }
 
 function keydown(event) {
@@ -257,7 +265,7 @@ function keyup(event) {
 function load_assets(assets, callback) {
     let num_assets = assets.length;
     let loaded = function() {
-        console.log("loaded asset")
+        console.debug("loaded asset")
         num_assets -= 1;
         if (num_assets === 0) {
             console.log("loaded all assets");
@@ -267,13 +275,13 @@ function load_assets(assets, callback) {
     for (let asset of assets) {
         let element = asset.var;
         if (element instanceof HTMLImageElement) {
-            console.log("image");
+            console.debug("loading image");
             element.addEventListener("load", loaded, false);
         } else if (element instanceof HTMLAudioElement) {
-            console.log("audio");
+            console.debug("loading audio");
             element.addEventListener("canplaythrough", loaded, false);
         } else {
-            console.log("unknown type of asset, skipping");
+            console.warn("unknown type of asset, skipping");
         }
         element.src = asset.url;
     }

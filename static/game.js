@@ -1,5 +1,18 @@
 function eq_coord(a, b) {
-    return a.every((elem, index) => { return b[index] === elem });
+    return a.every(
+        (elem, index) => {
+            return b[index] === elem
+    });
+}
+
+function canTraverse(gameMap, tileTranslation, row, col) {
+    return (
+        row >= 0
+        && col >= 0
+        && row < gameMap.length
+        && col < gameMap[row].length
+        && (tileTranslation[gameMap[row][col]]?.traversable ?? false)
+    );
 }
 
 function processCamera(camera) {
@@ -19,9 +32,9 @@ function processCamera(camera) {
 }
 
 function generatePath(gameMap, tileTranslation, origin, dest) {
-    console.log("called generatePath");
     // naive BFS
     let q = [origin];
+    let explored = 1;
 
     // maps vertices to previous node in search
     let visited = gameMap.map((row) => { return new Array(row.length).fill(null) });
@@ -38,11 +51,12 @@ function generatePath(gameMap, tileTranslation, origin, dest) {
             [vx,   vy+1],
         ];
         for (let [row, col] of neighbors) {
-            if (row >= 0 && col >= 0 && row < visited.length && col < visited[row].length ) {
                 // valid coordinate
+            if (canTraverse(gameMap, tileTranslation, row, col)) {
                 // TODO: check if tile is traversable
                 if (!visited[row][col]) {
                     visited[row][col] = [vx, vy]; // set previous node
+                    explored += 1;
                     q.push([row, col]);
                 }
             }
@@ -55,6 +69,7 @@ function generatePath(gameMap, tileTranslation, origin, dest) {
         path.unshift(visited[v[0]][v[1]]);
         v = visited[v[0]][v[1]];
     }
+    console.log(`Found path by exploring ${explored} nodes`);
     return path;
 }
 

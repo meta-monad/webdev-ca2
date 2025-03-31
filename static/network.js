@@ -22,4 +22,8 @@ function readystatechange(xhttp, successCallback, failCallback) {
     }
 }
 
+async function getServerUpdate() {
+    // makeRequest();
+}
+
 export { makeRequest };

@@ -32,9 +32,14 @@ function processCamera(camera) {
 }
 
 function generatePath(gameMap, tileTranslation, origin, dest) {
+    if (!canTraverse(gameMap, tileTranslation, dest[0], dest[1])) {
+        // there is no point in exploring the entire map if the destination node isn't valid
+        return [];
+    }
+
     // naive BFS
     let q = [origin];
-    let explored = 1;
+    let explored = 1; // counter for debugging purposes
 
     // maps vertices to previous node in search
     let visited = gameMap.map((row) => { return new Array(row.length).fill(null) });
@@ -70,6 +75,7 @@ function generatePath(gameMap, tileTranslation, origin, dest) {
         v = visited[v[0]][v[1]];
     }
     console.log(`Found path by exploring ${explored} nodes`);
+    console.log(path);
     return path;
 }
 

@@ -2,6 +2,10 @@
 
 https://imgur.com/gallery/isometry-guide-beginners-bonus-guides-zkw0zJq
 
+# Python
+
+https://docs.python.org/3/library/json.html#json.dump
+
 # JavaScript
 
 ## array operations
@@ -21,6 +25,9 @@ https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/
 
 ## general javascript
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/switch
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every
@@ -29,4 +36,5 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Opti
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules
 https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Async_JS - entire series
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await
 https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API - entire series

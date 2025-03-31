@@ -1,6 +1,6 @@
-import { drawTile, drawMap, drawPlayer, getMouseTile, drawSelection } from "./renderer.js";
+import { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection } from "./renderer.js";
 import { processCamera, generatePath } from "./game.js";
-import { makeRequest } from "./network.js";
+import { makeRequest, getServerUpdate, makeServerUpdate } from "./network.js";
 
 let canvas;
 let context;
@@ -15,6 +15,7 @@ let player = {
     width : 8,
     height : 16,
 };
+let entities = [];
 let camera = {
     x : 0,
     y : 0,
@@ -28,12 +29,13 @@ let camera = {
     mouseY : null,
 };
 
-const gameMap = [
-        [1,1,2],
-        [1,3,-1],
-        [-1,1,3],
-        [3,3,3]
-];
+// const gameMap = [
+//         [1,1,2],
+//         [1,3,-1],
+//         [-1,1,3],
+//         [3,3,3]
+// ];
+let gameMap = [];
 const tileWidth = 32;
 const tileHeight = 16;
 let path = [];
@@ -110,49 +112,32 @@ function game_init(player_name, game_id) {
     data.append("game_id", game_id);
     data.append("player_name", player_name);
 
-    makeRequest("/begin_session", data)
-        .then((response) => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                throw new Error("bad request");
-            }
-        })
-        .then((response) => {
-            if (response.status != "success") {
-                throw new Error("bad request", {
-                    cause : response.response
-                });
-            } else {
-                return response.response;
-            }
-        })
-        .then((response) => {
-            console.log(response);
-            player.position.x = response.x;
-            player.position.y = response.y;
-            player.player_name = response.player_name;
+    makeRequest("/begin_session", data, (response) => {
+        console.log(response);
+        player.position.x = response.x;
+        player.position.y = response.y;
+        player.player_name = response.player_name;
 
-            document.getElementById("game_area").hidden = false;
-            document.getElementById("join_form").hidden = true;
+        document.getElementById("game_area").hidden = false;
+        document.getElementById("join_form").hidden = true;
 
-            canvas = document.querySelector("canvas");
-            context = canvas.getContext("2d");
+        canvas = document.querySelector("canvas");
+        context = canvas.getContext("2d");
 
-            context.imageSmoothingEnabled = false;
+        context.imageSmoothingEnabled = false;
 
-            window.addEventListener("mousemove", mousemove, false);
-            window.addEventListener("click", click, false);
-            window.addEventListener("keyup", keyup, false);
-            window.addEventListener("keydown", keydown, false);
-            load_assets([
-                {var : spriteMap, url : "static/spritemap.png"}
-            ], draw);
-        })
-        .catch((error) => {
-            console.error(error);
-            document.getElementById("error").innerText = `Error: ${error.cause ?? "Server error"}`;
-        })
+        window.addEventListener("mousemove", mousemove, false);
+        window.addEventListener("click", click, false);
+        window.addEventListener("keyup", keyup, false);
+        window.addEventListener("keydown", keydown, false);
+
+        load_assets([
+            {var : spriteMap, url : "static/spritemap.png"}
+        ], draw);
+    }, (error) => {
+        console.error(error);
+        document.getElementById("error").innerText = `Error: ${error.cause ?? "Server error"}`;
+    });
 }
 
 export function setcoords(x, y) {
@@ -175,6 +160,30 @@ function draw() {
 
     gameTickCounter += 1;
     if (gameTickCounter % 3 === 0) { // 100ms
+        getServerUpdate((gameState) => {
+            entities = [];
+            for (const {player_name, x, y} of gameState.players) {
+                if (player_name === player.player_name) {
+                    player.position.x = x;
+                    player.position.y = y;
+                } else {
+                    entities.push({
+                        type : "player",
+                        position : {
+                            x : x,
+                            y : y
+                        },
+                        width: player.width,
+                        height: player.height
+                    })
+                }
+            }
+            gameMap = gameState.gameMap;
+        });
+        if (path.length) {
+            [player.position.x, player.position.y] = path.shift();
+            makeServerUpdate(player);
+        }
     }
 
     // background
@@ -187,7 +196,10 @@ function draw() {
     context.translate(camera.x, camera.y);
 
     // draw game map
-    drawMap(context, camera, gameMap, tileTranslation, spriteMap, canvas.width, tileWidth, tileHeight);
+    drawMap(context, camera, gameMap, tileTranslation, spriteMap, tileWidth, tileHeight, canvas.width,);
+
+    // draw entities
+    drawEntities(context, camera, entities, tileWidth, tileHeight, canvas.width);
 
     // tile selection
     drawSelection(context, camera, gameMap, tileTranslation, spriteMap, canvas.width, tileWidth, tileHeight);
@@ -221,7 +233,7 @@ function click(event) {
         [player.position.x, player.position.y],
         dest
     );
-    path.unshift(dest);
+    path.push(dest);
 }
 
 function keydown(event) {

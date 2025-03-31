@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, session, redirect, url_for
 from flask_session import Session
 
 from gamestate import Player, make_response
+from datetime import datetime, timedelta
+import json
 
 app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
@@ -26,7 +28,13 @@ def begin_session():
     if game_id not in gamesessions:
         # player starts new game
         gamesessions[game_id] = {
-            "players" : [player]
+            "players" : [player],
+            "gameMap" : [
+                            [1,1,2],
+                            [1,3,-1],
+                            [-1,1,3],
+                            [3,3,3]
+                        ],
         }
         
     else:
@@ -51,3 +59,32 @@ def end_session():
     session.clear()
     session.modified = True
     return redirect(url_for('index'))
+
+@app.route("/get_state", methods=["GET"])
+def get_state():
+    if "player" in session:
+        return make_response("success", json.loads(json.dumps(gamesessions[session["game_id"]], default=vars))) # TODO: filter out extra data
+    else:
+        return make_response("error", "player not in game")
+
+@app.route("/set_state", methods=["POST"])
+def set_state():
+    if "player" in session:
+        gid = session["game_id"]
+        player_index = gamesessions[gid]["players"].index(session["player"])
+        player = gamesessions[gid]["players"].pop(player_index)
+        x = int(request.form["x"])
+        y = int(request.form["y"])
+        if abs(player.x - x) + abs(player.y - y) <= 1 and (datetime.now() - datetime.fromisoformat(player.last_update)) >= timedelta(milliseconds=100):
+            print("Player is moving")
+            player.x = x
+            player.y = y
+            gamesessions[gid]["players"].append(player)
+            session["player"] = player
+            session.modified = True
+            return make_response("success", None)
+        else:
+            gamesessions[gid]["players"].append(player)
+            return make_response("error", "invalid game update")
+    else:
+        return make_response("error", "player not in game")

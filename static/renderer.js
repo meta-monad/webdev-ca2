@@ -9,13 +9,31 @@ function drawTile(context, camera, tile, spriteMap, row, col, canvasWidth, tileW
     );
 }
 
-function drawMap(context, camera, gameMap, tileTranslation, spriteMap, canvasWidth, tileWidth, tileHeight) {
+function drawMap(context, camera, gameMap, tileTranslation, spriteMap, tileWidth, tileHeight, canvasWidth) {
     for (let r = 0; r < gameMap.length; r+=1) {
         for (let c = 0; c < gameMap[r].length; c+=1) {
             let tile = tileTranslation[gameMap[r][c]];
             if (tile) {
                 drawTile(context, camera, tile, spriteMap, r, c, canvasWidth, tileWidth, tileHeight);
             }
+        }
+    }
+}
+
+function drawEntities(context, camera, entities, tileWidth, tileHeight, canvasWidth) {
+    for (const entity of entities) {
+        switch (entity.type) {
+            case "player":
+                context.fillStyle = "blue";
+                context.fillRect(
+                    0.5 * ( canvasWidth - entity.width * camera.tileScale) + 0.5 * ( entity.position.y - entity.position.x ) * tileWidth * camera.tileScale,
+                    0.5 * tileHeight * camera.tileScale + 0.5 * ( entity.position.y + entity.position.x ) * tileHeight * camera.tileScale - entity.height * camera.tileScale,
+                    entity.width * camera.tileScale,
+                    entity.height * camera.tileScale
+                );
+                break;
+            default:
+                console.warn(`unexpected type of entity: ${entity.type}`)
         }
     }
 }
@@ -42,9 +60,10 @@ function getMouseTile(camera, canvasWidth, tileWidth, tileHeight) {
     // to obtain c & r, we resolve the system of equations by summation/subtraction and dividing by 2/-2
 
     let r = (
-        camera.mouseX - ((tileWidth * camera.tileScale ) / 2)
-        - 0.5 * (canvasWidth - tileWidth * camera.tileScale)
-        - 2 * camera.mouseY + (tileHeight * camera.tileScale)
+        camera.mouseX
+        - 2 * camera.mouseY
+        - (canvasWidth / 2)
+        + (tileHeight * camera.tileScale) * (3/2)
     ) / (-2 * tileHeight * camera.tileScale);
     let c = (
         camera.mouseX
@@ -70,6 +89,7 @@ function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, can
     // if (r >= 0 && c >= 0&& r < gameMap.length && c < gameMap[r].length && tileTranslation[gameMap[r][c]])
     drawTile(context, camera, tile, spriteMap, r, c, canvasWidth, tileWidth, tileHeight);
 
+    // debug: draw the mouse position
     //context.fillStyle = "yellow";
     //context.fillRect(
     //    camera.mouseX,
@@ -80,4 +100,4 @@ function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, can
     return (r, c);
 }
 
-export { drawTile, drawMap, drawPlayer, getMouseTile, drawSelection };
+export { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection };

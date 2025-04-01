@@ -112,7 +112,7 @@ function game_init(player_name, game_id) {
     data.append("game_id", game_id);
     data.append("player_name", player_name);
 
-    makeRequest("/begin_session", data, (response) => {
+    makeRequest("./begin_session", data, (response) => {
         console.log(response);
         player.position.x = response.x;
         player.position.y = response.y;

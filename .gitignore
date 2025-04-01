@@ -1,3 +1,4 @@
 __pycache__
 .vscode
 flask_session
+global_state.json

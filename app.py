@@ -21,12 +21,12 @@ gamestate = GlobalState()
 @app.before_request
 def get_game_state():
     g.gamesessions = gamestate.get_data()
+    # print(f"HI: {g.gamesessions}")
 
 # @app.after_request
 def save_game_state(e=None):
     gamestate.set_data(g.gamesessions)
 app.teardown_appcontext(save_game_state)
-
 
 @app.route("/")
 def index():
@@ -40,7 +40,7 @@ def game():
 def begin_session():
     game_id = int(request.form["game_id"])
     player_name = request.form["player_name"]
-    player = Player(player_name, 2, 1) # TODO: spawn positions
+    player = Player(player_name, 2, 1, datetime.now()) # TODO: spawn positions
     if game_id not in g.gamesessions:
         # player starts new game
         g.gamesessions[game_id] = {
@@ -92,8 +92,14 @@ def set_state():
         gid = session["game_id"]
         player_index = g.gamesessions[gid]["players"].index(session["player"])
         player = g.gamesessions[gid]["players"].pop(player_index)
+        print(player)
+
         x = int(request.form["x"])
         y = int(request.form["y"])
+        print(f"original: x:{player.x}, y:{player.y}")
+        print(f"changed:  x:{x}, y:{y}")
+        print(datetime.now() - datetime.fromisoformat(player.last_update))
+
         if abs(player.x - x) + abs(player.y - y) <= 1 and (datetime.now() - datetime.fromisoformat(player.last_update)) >= timedelta(milliseconds=100):
             print("Player is moving")
             player.x = x

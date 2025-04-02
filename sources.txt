@@ -5,6 +5,7 @@ https://imgur.com/gallery/isometry-guide-beginners-bonus-guides-zkw0zJq
 # Python
 
 https://docs.python.org/3/library/json.html#json.dump
+https://docs.python.org/3/tutorial/datastructures.html#dictionaries
 
 # JavaScript
 

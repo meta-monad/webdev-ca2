@@ -140,12 +140,28 @@ function game_init(player_name, game_id) {
     });
 }
 
-export function setcoords(x, y) {
-    player.position.x = x;
-    player.position.y = y;
+function update_game_state(gameState) {
+    entities = [];
+    for (const {player_name, x, y} of gameState.players) {
+        if (player_name === player.player_name) {
+            player.position.x = x;
+            player.position.y = y;
+        } else {
+            entities.push({
+                type : "player",
+                position : {
+                    x : x,
+                    y : y
+                },
+                width: player.width,
+                height: player.height
+            })
+        }
+    }
+    gameMap = gameState.gameMap;
 }
 
-globalThis.setcoords = setcoords;
+let current_time;
 
 function draw() {
     window.requestAnimationFrame(draw);
@@ -160,29 +176,24 @@ function draw() {
 
     gameTickCounter += 1;
     if (gameTickCounter % 3 === 0) { // 100ms
-        getServerUpdate((gameState) => {
-            entities = [];
-            for (const {player_name, x, y} of gameState.players) {
-                if (player_name === player.player_name) {
-                    player.position.x = x;
-                    player.position.y = y;
-                } else {
-                    entities.push({
-                        type : "player",
-                        position : {
-                            x : x,
-                            y : y
-                        },
-                        width: player.width,
-                        height: player.height
-                    })
-                }
-            }
-            gameMap = gameState.gameMap;
-        });
+        // let new_time = new Date();
+        // let diff = new_time - current_time;
+        // console.debug(diff);
+        // current_time = new_time;
+        
+        getServerUpdate(update_game_state);
         if (path.length) {
             [player.position.x, player.position.y] = path.shift();
-            makeServerUpdate(player);
+            makeServerUpdate(player)
+            .then(() => {
+                // let current_time = new Date();
+                // console.log(`server update on: ${current_time.getSeconds()}:${current_time.getMilliseconds()}`);
+                getServerUpdate(update_game_state);
+            })
+            .catch(() => {
+                let current_time = new Date();
+                console.log(`failed server update on: ${current_time.getSeconds()}:${current_time.getMilliseconds()}`);
+            });
         }
     }
 
@@ -233,7 +244,6 @@ function click(event) {
         [player.position.x, player.position.y],
         dest
     );
-    path.push(dest);
 }
 
 function keydown(event) {

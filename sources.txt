@@ -33,6 +33,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules

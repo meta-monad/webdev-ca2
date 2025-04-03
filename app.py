@@ -24,9 +24,8 @@ def get_game_state():
     # print(f"HI: {g.gamesessions}")
 
 # @app.after_request
-def save_game_state(e=None):
+def save_game_state():
     gamestate.set_data(g.gamesessions)
-app.teardown_appcontext(save_game_state)
 
 @app.route("/")
 def index():
@@ -38,10 +37,15 @@ def game():
 
 @app.route("/begin_session", methods=["POST"])
 def begin_session():
-    game_id = int(request.form["game_id"])
+    try:
+        game_id = int(request.form["game_id"])
+    except:
+        # nicer error handling
+        return make_response("error", "game id must be an integer")
+    
     player_name = request.form["player_name"]
     player = Player(player_name, 2, 1, datetime.now()) # TODO: spawn positions
-    if game_id not in g.gamesessions:
+    if game_id not in g.gamesessions and game_id >= 1:
         # player starts new game
         g.gamesessions[game_id] = {
             "players" : [player],
@@ -52,7 +56,8 @@ def begin_session():
                             [3,3,3]
                         ],
         }
-        
+    elif game_id not in g.gamesessions and game_id <= 0:
+        return make_response("error", "game id must be positive")
     else:
         # existing lobby
         if player_name in [player.player_name for player in g.gamesessions[game_id]["players"]]:
@@ -63,8 +68,9 @@ def begin_session():
     session["player"] = player
     session["game_id"] = game_id
     session.modified = True
+    save_game_state()
 
-    return make_response("success", vars(player))
+    return make_response("success", player)
 
 @app.route("/end_session", methods=["GET"])
 def end_session():
@@ -74,6 +80,7 @@ def end_session():
             g.gamesessions.pop(gid)
     session.clear()
     session.modified = True
+    save_game_state()
     return redirect(url_for('index'))
 
 @app.route("/get_state", methods=["GET"])
@@ -92,21 +99,23 @@ def set_state():
         gid = session["game_id"]
         player_index = g.gamesessions[gid]["players"].index(session["player"])
         player = g.gamesessions[gid]["players"].pop(player_index)
-        print(player)
 
         x = int(request.form["x"])
         y = int(request.form["y"])
-        print(f"original: x:{player.x}, y:{player.y}")
-        print(f"changed:  x:{x}, y:{y}")
-        print(datetime.now() - datetime.fromisoformat(player.last_update))
 
-        if abs(player.x - x) + abs(player.y - y) <= 1 and (datetime.now() - datetime.fromisoformat(player.last_update)) >= timedelta(milliseconds=100):
-            print("Player is moving")
+        if not abs(player.x - x) + abs(player.y - y) <= 1:
+            print("[DEBUG] Invalid player move")
+        # if not (datetime.now() - datetime.fromisoformat(player.last_update)) >= timedelta(milliseconds=150):
+        #     print("[DEBUG] Game update was too fast")
+        
+        if abs(player.x - x) + abs(player.y - y) <= 1: # and (datetime.now() - datetime.fromisoformat(player.last_update)) >= timedelta(milliseconds=150):
             player.x = x
             player.y = y
+            player.last_update = datetime.now()
             g.gamesessions[gid]["players"].append(player)
             session["player"] = player
             session.modified = True
+            save_game_state()
             return make_response("success", None)
         else:
             g.gamesessions[gid]["players"].append(player)

@@ -2,12 +2,6 @@ import os.path
 import json
 import game
 
-def json_helper(obj):
-    if isinstance(obj, game.Player):
-        return vars(obj)
-    else:
-        return str(obj)
-
 class GlobalState():
     def __init__(self, fname="global_state.json"):
         fname = os.path.join(os.path.abspath(os.path.dirname(__file__)), fname)
@@ -27,4 +21,4 @@ class GlobalState():
     
     def set_data(self, data):
         with open(self.fname, "w") as f:
-            json.dump(data, f, default=json_helper, indent=2)
+            json.dump(data, f, default=game.json_helper, indent=2)

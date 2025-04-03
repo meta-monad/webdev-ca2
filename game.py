@@ -1,6 +1,12 @@
 import json
 from datetime import datetime
 
+def json_helper(obj):
+    if isinstance(obj, Player):
+        return vars(obj)
+    else:
+        return str(obj)
+
 class Player:
     def __init__(self, player_name, x, y, last_update):
        self.player_name = player_name
@@ -20,5 +26,6 @@ def make_response(status, extra):
             {
                 "status" : status,
                 "response" : extra
-            }
+            },
+            default=json_helper
     )

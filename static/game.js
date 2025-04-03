@@ -68,8 +68,8 @@ function generatePath(gameMap, tileTranslation, origin, dest) {
         }
     }
 
-    let path = [];
     let v = dest;
+    let path = [dest];
     while (!eq_coord(v, origin)) {
         path.unshift(visited[v[0]][v[1]]);
         v = visited[v[0]][v[1]];

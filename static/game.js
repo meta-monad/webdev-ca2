@@ -70,7 +70,7 @@ function generatePath(gameMap, tileTranslation, origin, dest) {
 
     let v = dest;
     let path = [dest];
-    while (!eq_coord(v, origin)) {
+    while (!eq_coord(visited[v[0]][v[1]], origin)) { // TODO: walrus?
         path.unshift(visited[v[0]][v[1]]);
         v = visited[v[0]][v[1]];
     }

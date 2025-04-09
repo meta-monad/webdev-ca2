@@ -13,10 +13,9 @@ class GlobalState():
     def get_data(self):
         with open(self.fname, "r") as f: 
             data = json.load(f)
-        data = { int(game_id) : v for game_id, v in data.items() } # coerce back top-level game ids for dictionary
-        for game_id in data.keys():
-            players_raw = data[game_id]["players"]
-            data[game_id]["players"] = [ game.Player(player["player_name"], player["x"], player["y"], player["last_update"]) for player in players_raw]
+        for player_name in data.keys():
+            player_raw = data[player_name]["player"]
+            data[player_name]["player"] = game.Player(player_raw["player_name"], player_raw["x"], player_raw["y"], player_raw["last_update"])
         return data
     
     def set_data(self, data):

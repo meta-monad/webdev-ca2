@@ -1,6 +1,6 @@
 import { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection } from "./renderer.js";
 import { processCamera, generatePath } from "./game.js";
-import { makeRequest, getServerUpdate, makeServerUpdate } from "./network.js";
+import { makeRequest, saveGameState } from "./network.js";
 
 let canvas;
 let context;
@@ -28,6 +28,10 @@ let camera = {
     mouseX : null,
     mouseY : null,
 };
+let gameCycle = {
+    limit : null,
+    queue : [],
+}
 
 // const gameMap = [
 //         [1,1,2],
@@ -102,21 +106,20 @@ function init() {
         event.preventDefault();
 
         let player_name = document.getElementById("player_name").value;
-        let game_id = document.getElementById("game_id").value;
-        game_init(player_name, game_id);
+        game_init(player_name);
     });
 }
 
-function game_init(player_name, game_id) {
+function game_init(player_name) {
     let data = new FormData();
-    data.append("game_id", game_id);
     data.append("player_name", player_name);
 
     makeRequest("./begin_session", data, (response) => {
         console.log(response);
-        player.position.x = response.x;
-        player.position.y = response.y;
-        player.player_name = response.player_name;
+        player.position.x = response.player.x;
+        player.position.y = response.player.y;
+        player.player_name = response.player.player_name;
+        gameMap = response.gameMap;
 
         document.getElementById("game_area").hidden = false;
         document.getElementById("join_form").hidden = true;
@@ -140,28 +143,6 @@ function game_init(player_name, game_id) {
     });
 }
 
-function update_game_state(gameState) {
-    entities = [];
-    for (const {player_name, x, y} of gameState.players) {
-        if (player_name === player.player_name) {
-            player.position.x = x;
-            player.position.y = y;
-        } else {
-            entities.push({
-                type : "player",
-                position : {
-                    x : x,
-                    y : y
-                },
-                width: player.width,
-                height: player.height
-            })
-        }
-    }
-    gameMap = gameState.gameMap;
-}
-
-let current_time;
 
 function draw() {
     window.requestAnimationFrame(draw);
@@ -175,25 +156,22 @@ function draw() {
     then = now - (delta % fpsInterval);
 
     gameTickCounter += 1;
+    
     if (gameTickCounter % 3 === 0) { // 100ms
-        // let new_time = new Date();
-        // let diff = new_time - current_time;
-        // console.debug(diff);
-        // current_time = new_time;
-        
-        getServerUpdate(update_game_state);
-        if (path.length) {
-            [player.position.x, player.position.y] = path.shift();
-            makeServerUpdate(player)
-            .then(() => {
-                // let current_time = new Date();
-                // console.log(`server update on: ${current_time.getSeconds()}:${current_time.getMilliseconds()}`);
-                getServerUpdate(update_game_state);
-            })
-            .catch(() => {
-                let current_time = new Date();
-                console.log(`failed server update on: ${current_time.getSeconds()}:${current_time.getMilliseconds()}`);
-            });
+        if (gameCycle.queue.length) {
+            let action = gameCycle.queue.shift();
+            switch (action.actionType) {
+                case "move":
+                    console.log("move");
+                    [player.position.x, player.position.y] = action.position;
+                    break;
+                default:
+                    console.warn("unknown action type in game cycle: ", action);
+            }
+        }
+        // (x % 30 = 0) => (x % 3 = 0)
+        if (gameTickCounter % 300 === 0) { // 10s
+            saveGameState(player);
         }
     }
 
@@ -219,10 +197,10 @@ function draw() {
     drawPlayer(context, camera, player, tileWidth, tileHeight, canvas.width);
 
     // navigated path
-    const tile = tileTranslation[4];
-    for (let [r, c] of path) {
-        drawTile(context, camera, tile, spriteMap, r, c, canvas.width, tileWidth, tileHeight);
-    }
+    // const tile = tileTranslation[4];
+    // for (let [r, c] of path) {
+    //     drawTile(context, camera, tile, spriteMap, r, c, canvas.width, tileWidth, tileHeight);
+    // }
     
     // camera
     processCamera(camera);
@@ -244,6 +222,16 @@ function click(event) {
         [player.position.x, player.position.y],
         dest
     );
+
+    // TODO
+    if (gameCycle.queue.length < gameCycle.limit || !gameCycle.limit) { // gameCycle.limit is nullable
+        gameCycle.queue.push(...path.map((pathNode) => {
+            return {
+                actionType : "move",
+                position : pathNode
+            }
+        }));
+    }
 }
 
 function keydown(event) {

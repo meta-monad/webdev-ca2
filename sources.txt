@@ -25,6 +25,9 @@ https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/save
 https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Form_validation#validating_forms_using_javascript
 
 ## general javascript
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/switch
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
@@ -33,9 +36,8 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
-https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining
-https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules
 https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Async_JS - entire series
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await

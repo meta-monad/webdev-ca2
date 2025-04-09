@@ -37,11 +37,11 @@ async function getServerUpdate(callback) {
     }, empty, "GET");
 }
 
-async function makeServerUpdate(player) {
+async function saveGameState(player) {
     let player_data = new FormData();
     player_data.append("x", player.position.x);
     player_data.append("y", player.position.y);
-    return makeRequest("./set_state", player_data, empty, empty);
+    return makeRequest("./save_game", player_data, empty, empty);
 }
 
-export { makeRequest, getServerUpdate, makeServerUpdate };
+export { makeRequest, getServerUpdate, saveGameState };

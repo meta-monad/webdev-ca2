@@ -33,6 +33,10 @@ def game():
 @app.route("/begin_session", methods=["POST"])
 def begin_session():    
     player_name = request.form["player_name"]
+    
+    if not len(player_name):
+        return make_response("error", "empty username")
+
     if player_name not in g.gamesessions and len(player_name):
         # player starts new game
         player = Player(player_name, 2, 1, datetime.now()) # TODO: spawn positions
@@ -42,8 +46,21 @@ def begin_session():
                             [1,1,2],
                             [1,3,-1],
                             [-1,1,3],
-                            [3,3,3]
+                            [1,1,1],
+                            [1,1,1],
+                            [1,1,1],
+                            [3,3,3],
                         ],
+            "entities" : [
+                    {
+                        "constructor" : "enemy",
+                        "position" : [5,0],
+                        "args" : {
+                            "name" : "boogoo",
+                            "attackPoints" : 5
+                        }
+                    }
+            ]
         }
 
         session["player"] = player

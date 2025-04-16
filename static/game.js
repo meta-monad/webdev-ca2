@@ -1,3 +1,53 @@
+function enemyConstructor(args, position) {
+    // check for the existence of required fields
+    if (!("name" in args) ||
+        !("attackPoints" in args) ||
+        position.length !== 2
+       ) {
+        return false;
+    }
+
+    return {
+        name : args.name,
+        type : args.type ?? "enemy",
+        drawInfo : {
+            width : 8,
+            height : 14,
+            fillColor : "green",
+        },
+        position : {
+            x: position[0],
+            y: position[1],
+        },
+        internalState : {
+            engaged : args.engaged ?? false,
+            health : args.health ?? 10,
+            alive : args.alive ?? true
+        },
+        updateFunction : function (gameMap, player, tickCount) { // -> Option<Bool>
+            if (this.internalState.engaged) {
+                console.log("Engaging"); 
+                // return is meaningless here
+            } else {
+                if (this.alive) {
+                    console.debug("Still alive!");
+                }
+                return false; // never engaging
+            }
+        },
+    }
+}
+
+function generateEntityCombatScore(entity) {
+    // TODO
+    return 1;
+}
+
+function generatePlayerCombatScore(player) {
+    // TODO
+    return 2;
+}
+
 function eq_coord(a, b) {
     return a.every(
         (elem, index) => {
@@ -5,13 +55,16 @@ function eq_coord(a, b) {
     });
 }
 
-function canTraverse(gameMap, tileTranslation, row, col) {
+function canTraverse(gameMap, tileTranslation, entities, row, col) {
     return (
         row >= 0
         && col >= 0
         && row < gameMap.length
         && col < gameMap[row].length
         && (tileTranslation[gameMap[row][col]]?.traversable ?? false)
+        && entities.every(e => {
+            return (row != e.position.x) || (col != e.position.y);
+        })
     );
 }
 
@@ -31,8 +84,8 @@ function processCamera(camera) {
     }
 }
 
-function generatePath(gameMap, tileTranslation, origin, dest) {
-    if (!canTraverse(gameMap, tileTranslation, dest[0], dest[1])) {
+function generatePath(gameMap, tileTranslation, entities, origin, dest) {
+    if (!canTraverse(gameMap, tileTranslation, entities, dest[0], dest[1])) {
         // there is no point in exploring the entire map if the destination node isn't valid
         return [];
     }
@@ -57,7 +110,7 @@ function generatePath(gameMap, tileTranslation, origin, dest) {
         ];
         for (let [row, col] of neighbors) {
                 // valid coordinate
-            if (canTraverse(gameMap, tileTranslation, row, col)) {
+            if (canTraverse(gameMap, tileTranslation, entities, row, col)) {
                 // TODO: check if tile is traversable
                 if (!visited[row][col]) {
                     visited[row][col] = [vx, vy]; // set previous node
@@ -79,4 +132,4 @@ function generatePath(gameMap, tileTranslation, origin, dest) {
     return path;
 }
 
-export { processCamera, generatePath }; 
+export { processCamera, generatePath, enemyConstructor }; 

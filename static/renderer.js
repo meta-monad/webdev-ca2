@@ -23,13 +23,13 @@ function drawMap(context, camera, gameMap, tileTranslation, spriteMap, tileWidth
 function drawEntities(context, camera, entities, tileWidth, tileHeight, canvasWidth) {
     for (const entity of entities) {
         switch (entity.type) {
-            case "player":
-                context.fillStyle = "blue";
+            case "enemy":
+                context.fillStyle = entity.drawInfo.fillColor;
                 context.fillRect(
-                    0.5 * ( canvasWidth - entity.width * camera.tileScale) + 0.5 * ( entity.position.y - entity.position.x ) * tileWidth * camera.tileScale,
-                    0.5 * tileHeight * camera.tileScale + 0.5 * ( entity.position.y + entity.position.x ) * tileHeight * camera.tileScale - entity.height * camera.tileScale,
-                    entity.width * camera.tileScale,
-                    entity.height * camera.tileScale
+                    0.5 * ( canvasWidth - entity.drawInfo.width * camera.tileScale) + 0.5 * ( entity.position.y - entity.position.x ) * tileWidth * camera.tileScale,
+                    0.5 * tileHeight * camera.tileScale + 0.5 * ( entity.position.y + entity.position.x ) * tileHeight * camera.tileScale - entity.drawInfo.height * camera.tileScale,
+                    entity.drawInfo.width * camera.tileScale,
+                    entity.drawInfo.height * camera.tileScale
                 );
                 break;
             default:

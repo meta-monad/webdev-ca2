@@ -1,5 +1,5 @@
 import { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection } from "./renderer.js";
-import { processCamera, generatePath } from "./game.js";
+import { processCamera, generatePath, enemyConstructor } from "./game.js";
 import { makeRequest, saveGameState } from "./network.js";
 
 let canvas;
@@ -15,7 +15,6 @@ let player = {
     width : 8,
     height : 16,
 };
-let entities = [];
 let camera = {
     x : 0,
     y : 0,
@@ -28,6 +27,9 @@ let camera = {
     mouseX : null,
     mouseY : null,
 };
+let entities = [];
+let combatQueue = [];
+let gameMode = "Exploring";
 let gameCycle = {
     limit : null,
     queue : [],
@@ -116,10 +118,31 @@ function game_init(player_name) {
 
     makeRequest("./begin_session", data, (response) => {
         console.log(response);
+
         player.position.x = response.player.x;
         player.position.y = response.player.y;
         player.player_name = response.player.player_name;
         gameMap = response.gameMap;
+
+        // process entities
+        for (let entity of response.entities) {
+            let state;
+            console.log("entity: ", entity);
+            switch (entity.constructor) {
+                case "enemy":
+                    state = enemyConstructor(entity.args, entity.position);
+                    break;
+                default:
+                    console.warn("Unable to import entity with constructor:\"", entity.constructor, "\", ignoring");
+            }
+            if (state) {
+                // state is undefined or false: both are falsy
+                console.log(state);
+                entities.push(state);
+            } else if (state === false) {
+                console.warn("Unable to create entity with constructor:\"", entity.constructor, "\", ignoring");
+            }
+        }
 
         document.getElementById("game_area").hidden = false;
         document.getElementById("join_form").hidden = true;
@@ -158,18 +181,73 @@ function draw() {
     gameTickCounter += 1;
     
     if (gameTickCounter % 3 === 0) { // 100ms
-        if (gameCycle.queue.length) {
-            let action = gameCycle.queue.shift();
-            switch (action.actionType) {
-                case "move":
-                    console.log("move");
-                    [player.position.x, player.position.y] = action.position;
-                    break;
-                default:
-                    console.warn("unknown action type in game cycle: ", action);
+        // process entitites: non-combat
+        for (let entity_index = 0; entity_index < entities.length; entity_index++) {
+            if (!(entity_index in combatQueue)) {
+                let entity = entities[entity_index];
+                let engaged = entity.updateFunction(gameMap, player, gameTickCounter);
+                if (engaged) {
+                    gameCycle.queue = [];
+                    gameMode = "Combat";
+                    let combatScore = generateCombatScore(entity);
+                    combatQueue.push((entity_index, combatScore));
+                }
             }
         }
-        // (x % 30 = 0) => (x % 3 = 0)
+
+        if (gameMode === "Combat") {
+            // process combat cycle
+
+            // .sort is an in-place operation that mutates combatQueue
+            combatQueue.sort(([entity1, score1], [entity2, score2]) => {
+                // positive/negative means number 1 is before/after number 2
+                // this sorts the array in descending order of combat score
+                return score2 - score1;
+            });
+
+            let playerMoved = False;
+            let playerScore = generatePlayerCombatScore(player);
+
+            for (let [entity_index, combatScore] of combatQueue) {
+                let entity = entities[entity_index];
+
+                if (!playerMoved && playerScore > combatScore) {
+                    playerMoved = true;
+                    alert("Your turn");
+                } else {
+                    entity.updateFunction();
+                    if (entity.internalState.health === 0) {
+                        combatQueue = combatQueue.filter((element) => 
+                            element[0] != entity_index
+                        );
+                        entity.internalState.alive = false;
+
+                        if (combatQueue.length === 0) {
+                            gameMode = "Exploring";
+                        }
+                    }
+                }
+            }
+        } else if (gameMode === "Exploring") {
+            // process non-combat game cycle
+            // player specific
+
+            if (gameCycle.queue.length) {
+                let action = gameCycle.queue.shift();
+                switch (action.actionType) {
+                    case "move":
+                        console.log("move");
+                        [player.position.x, player.position.y] = action.position;
+                        break;
+                    default:
+                        console.warn("unknown action type in game cycle: ", action);
+                }
+            }
+        } else {
+            console.error("gameMode has been set to an invalid state:" + gameMode); 
+        }
+
+        // auto-save
         if (gameTickCounter % 300 === 0) { // 10s
             saveGameState(player);
         }
@@ -187,13 +265,13 @@ function draw() {
     // draw game map
     drawMap(context, camera, gameMap, tileTranslation, spriteMap, tileWidth, tileHeight, canvas.width,);
 
-    // draw entities
-    drawEntities(context, camera, entities, tileWidth, tileHeight, canvas.width);
-
     // tile selection
     drawSelection(context, camera, gameMap, tileTranslation, spriteMap, canvas.width, tileWidth, tileHeight);
 
+    // draw entities
+    drawEntities(context, camera, entities, tileWidth, tileHeight, canvas.width);
     // player
+
     drawPlayer(context, camera, player, tileWidth, tileHeight, canvas.width);
 
     // navigated path
@@ -219,6 +297,7 @@ function click(event) {
     path = generatePath(
         gameMap,
         tileTranslation,
+        entities,
         [player.position.x, player.position.y],
         dest
     );

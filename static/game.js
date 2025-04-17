@@ -15,6 +15,7 @@ function enemyConstructor(args, position) {
             height : 14,
             fillColor : "green",
         },
+        description : "An ugly green blob.",
         position : {
             x: position[0],
             y: position[1],
@@ -22,15 +23,25 @@ function enemyConstructor(args, position) {
         internalState : {
             engaged : args.engaged ?? false,
             health : args.health ?? 10,
+            maxHealth : args.maxHealth ?? 10,
             alive : args.alive ?? true
         },
         updateFunction : function (gameMap, player, tickCount) { // -> Option<Bool>
             if (this.internalState.engaged) {
-                console.log("Engaging"); 
                 // return is meaningless here
             } else {
-                if (this.alive) {
-                    console.debug("Still alive!");
+                if (
+                    this.internalState.alive && 
+                    distance(
+                        [this.position.x, this.position.y],
+                        [player.position.x, player.position.y]
+                    ) <= 3
+                ) {
+                    // start of engagement
+                    this.drawInfo.fillColor = "fuchsia";
+                    this.internalState.engaged = true;
+
+                    return true;
                 }
                 return false; // never engaging
             }
@@ -46,6 +57,11 @@ function generateEntityCombatScore(entity) {
 function generatePlayerCombatScore(player) {
     // TODO
     return 2;
+}
+
+function distance(a, b) {
+    // taxicab metric function for this grid
+    return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
 }
 
 function eq_coord(a, b) {
@@ -132,4 +148,4 @@ function generatePath(gameMap, tileTranslation, entities, origin, dest) {
     return path;
 }
 
-export { processCamera, generatePath, enemyConstructor }; 
+export { processCamera, generatePath, eq_coord, enemyConstructor, generateEntityCombatScore, generatePlayerCombatScore }; 

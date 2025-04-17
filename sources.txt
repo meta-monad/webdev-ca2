@@ -1,6 +1,7 @@
-# For drawing isometric textures
+# Isometric grid 
 
 https://imgur.com/gallery/isometry-guide-beginners-bonus-guides-zkw0zJq
+https://en.wikipedia.org/wiki/Metric_space#Metrics_on_Euclidean_spaces
 
 # Python
 
@@ -31,6 +32,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/save
 https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Form_validation#validating_forms_using_javascript
 
 ## general javascript
+https://developer.mozilla.org/en-US/docs/Glossary/IIFE
 https://developer.mozilla.org/en-US/docs/Glossary/Falsy
 https://developer.mozilla.org/en-US/docs/Glossary/Shallow_copy
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring
@@ -39,6 +41,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Opti
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/switch
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/break
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions

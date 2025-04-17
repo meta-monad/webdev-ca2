@@ -1,5 +1,5 @@
 import { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection } from "./renderer.js";
-import { processCamera, generatePath, enemyConstructor } from "./game.js";
+import { processCamera, generatePath, eq_coord, enemyConstructor, generateEntityCombatScore, generatePlayerCombatScore } from "./game.js";
 import { makeRequest, saveGameState } from "./network.js";
 
 let canvas;
@@ -29,7 +29,13 @@ let camera = {
 };
 let entities = [];
 let combatQueue = [];
-let gameMode = "Exploring";
+let gameMode = "Exploring"; // Combat | Exploring
+let cursorMode = "Move"; // Move | Info | Attack
+
+function setCursor(val) {
+    cursorMode = val;
+}
+globalThis.setCursor = setCursor;
 let gameCycle = {
     limit : null,
     queue : [],
@@ -54,7 +60,8 @@ const tileTranslation = [
         y : 0,
         width : tileWidth,
         height : tileHeight,
-        traversable : false
+        traversable : false,
+        description : "An empty void. You stare into it, and it stares back.",
     },
     // 1
     {
@@ -62,7 +69,8 @@ const tileTranslation = [
         y : 16,
         width : tileWidth,
         height : tileHeight,
-        traversable : true
+        traversable : true,
+        description : "Flat land. Nothing out of the ordinary.",
     },
     // 2
     {
@@ -71,7 +79,8 @@ const tileTranslation = [
         width : tileWidth,
         height : tileHeight * 2,
         displacement : -tileHeight,
-        traversable : true
+        traversable : true,
+        description : "A perfectly flat wall. It might be good cover.",
     },
     // 3
     {
@@ -79,7 +88,8 @@ const tileTranslation = [
         y : 32,
         width : tileWidth,
         height : tileHeight * 2,
-        traversable : true
+        traversable : true,
+        description : "An edge. I should be careful around it.",
     },
     // 4
     {
@@ -88,7 +98,23 @@ const tileTranslation = [
         width : tileWidth,
         height : tileHeight,
         traversable : false
-    }
+    },
+    // 5
+    {
+        x : 64,
+        y : 0,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false
+    },
+    // 6
+    {
+        x : 96,
+        y : 0,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false
+    },
 ];
 
 // fps
@@ -179,6 +205,8 @@ function draw() {
     then = now - (delta % fpsInterval);
 
     gameTickCounter += 1;
+
+    /// game state updates
     
     if (gameTickCounter % 3 === 0) { // 100ms
         // process entitites: non-combat
@@ -189,8 +217,8 @@ function draw() {
                 if (engaged) {
                     gameCycle.queue = [];
                     gameMode = "Combat";
-                    let combatScore = generateCombatScore(entity);
-                    combatQueue.push((entity_index, combatScore));
+                    let combatScore = generateEntityCombatScore(entity);
+                    combatQueue.push([entity_index, combatScore]);
                 }
             }
         }
@@ -205,7 +233,7 @@ function draw() {
                 return score2 - score1;
             });
 
-            let playerMoved = False;
+            let playerMoved = false;
             let playerScore = generatePlayerCombatScore(player);
 
             for (let [entity_index, combatScore] of combatQueue) {
@@ -253,6 +281,8 @@ function draw() {
         }
     }
 
+    /// rendering
+
     // background
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#707070"; 
@@ -266,7 +296,7 @@ function draw() {
     drawMap(context, camera, gameMap, tileTranslation, spriteMap, tileWidth, tileHeight, canvas.width,);
 
     // tile selection
-    drawSelection(context, camera, gameMap, tileTranslation, spriteMap, canvas.width, tileWidth, tileHeight);
+    drawSelection(context, camera, gameMap, tileTranslation, spriteMap, cursorMode, canvas.width, tileWidth, tileHeight);
 
     // draw entities
     drawEntities(context, camera, entities, tileWidth, tileHeight, canvas.width);
@@ -292,24 +322,61 @@ function mousemove(event) {
 }
 
 function click(event) {
-    let dest = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
+    switch (cursorMode) {
+        case "Move":
+            let dest = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
 
-    path = generatePath(
-        gameMap,
-        tileTranslation,
-        entities,
-        [player.position.x, player.position.y],
-        dest
-    );
+            path = generatePath(
+                gameMap,
+                tileTranslation,
+                entities,
+                [player.position.x, player.position.y],
+                dest
+            );
 
-    // TODO
-    if (gameCycle.queue.length < gameCycle.limit || !gameCycle.limit) { // gameCycle.limit is nullable
-        gameCycle.queue.push(...path.map((pathNode) => {
-            return {
-                actionType : "move",
-                position : pathNode
+            // TODO
+            if (gameCycle.queue.length < gameCycle.limit || !gameCycle.limit) { // gameCycle.limit is nullable
+                gameCycle.queue.push(...path.map((pathNode) => {
+                    return {
+                        actionType : "move",
+                        position : pathNode
+                    }
+                }));
             }
-        }));
+            break;
+        case "Info" :
+            let coords = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
+
+            infoBlock : {
+                // check for an entity
+                for (let entity of entities) {
+                    if (eq_coord([entity.position.x, entity.position.y], coords)) {
+                        // TODO
+                        console.log(entity.description + " " + (() => {
+                            if (entity.internalState.maxHealth === entity.internalState.health) {
+                                return "It is unscathed. ";
+                            } else if (entity.internalState.health >= 4) {
+                                return "It looks wounded.";
+                            } else {
+                                // HP <= 3
+                                return "It looks infirm.";
+                            }
+                        })());
+                        break infoBlock;
+                    }
+
+                    // no entity on the tile, describe the tile instead
+                    const tileCode = gameMap[coords[0]][coords[1]];
+                    console.log(tileTranslation[tileCode].description);
+                }
+
+                break;
+            }
+        case "Attack":
+            // TODO
+            break;
+        default:
+            console.warn("Click with invalid cursorMode");
     }
 }
 

@@ -77,14 +77,27 @@ function getMouseTile(camera, canvasWidth, tileWidth, tileHeight) {
     return [r, c];
 }
 
-function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, canvasWidth, tileWidth, tileHeight) {
+function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, cursorMode, canvasWidth, tileWidth, tileHeight) {
 
     let [r, c] = getMouseTile(camera, canvasWidth, tileWidth, tileHeight);
 
     // const realX = 0.5 * (canvasWidth - tileWidth * camera.tileScale) + 0.5 * (col - row) * tileWidth * camera.tileScale; 
     // const realY = 0.5 * (c + r) * tileHeight * camera.tileScale;
 
-    const tile = tileTranslation[4];
+    let tile;
+    switch (cursorMode) {
+        case "Move":
+            tile = tileTranslation[4];
+            break;
+        case "Info":
+            tile = tileTranslation[5];
+            break;
+        case "Attack":
+            tile = tileTranslation[6];
+            break;
+        default:
+            console.warn("No interpret on selectionMode");
+    }
 
     // if (r >= 0 && c >= 0&& r < gameMap.length && c < gameMap[r].length && tileTranslation[gameMap[r][c]])
     drawTile(context, camera, tile, spriteMap, r, c, canvasWidth, tileWidth, tileHeight);

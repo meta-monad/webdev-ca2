@@ -113,4 +113,112 @@ function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, cur
     return (r, c);
 }
 
-export { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection };
+function getTopCoords(originType, x, y, width, height, canvasWidth, canvasHeight) {
+    let sourceX = 0, sourceY = 0;
+
+    // origin goes from top to bottom, left to right, like so:
+    // TL | TC | TR
+    // ------------
+    // CL | CC | CR
+    // ------------
+    // BL | BC | BR
+
+    // this check ensures that the origin can always be interpreted
+    if (!([
+        "TL", "TC", "TR",
+        "CL", "CC", "CR",
+        "BL", "BC", "BR"
+    ].includes(originType))) {
+        console.warn(`Unable to process UI element's origin: ${originType}, defaulting to top-left`);
+        originType = "TL";
+    }
+
+    switch (originType[0]) {
+        case "T":
+            sourceY = 0;
+            break;
+        case "C":
+            sourceY = Math.round(canvasHeight / 2);
+            break;
+        case "B":
+            sourceY = canvasHeight;
+            break;
+    }
+
+    switch (originType[1]) {
+        case "L":
+            sourceX = 0;
+            break;
+        case "C":
+            sourceX = Math.round(canvasWidth / 2);
+            break;
+        case "R":
+            sourceX = canvasWidth;
+            break;
+    }
+    
+    let destX = sourceX;
+    switch (originType[1]) {
+        case "L":
+            destX += x;
+            break;
+        case "C":
+            destX += x - Math.round(width / 2);
+            break;
+        case "R":
+            destX -= x + width;
+            break;
+    }
+
+    let destY = sourceY;
+    switch (originType[0]) {
+        case "T":
+            destY += y;
+            break;
+        case "C":
+            destY += y - Math.round(height / 2);
+            break;
+        case "B":
+            destY -= y + height;
+            break;
+    }
+
+    return {
+        x : destX,
+        y : destY,
+    };
+}
+
+function drawUI(context, UIElems, canvasWidth, canvasHeight) {
+    for (let UIElement of UIElems) {
+        switch (UIElement.type) {
+            case "fill":
+                let width = UIElement.width;
+                if (width === "fill") {
+                    width = canvasWidth;
+                }
+
+                let height = UIElement.height;
+                if (height === "fill") {
+                    height = canvasWidth;
+                }
+                let {x, y} = getTopCoords(
+                    UIElement.origin,
+                    UIElement.x ?? 0,
+                    UIElement.y ?? 0,
+                    width,
+                    height,
+                    canvasWidth,
+                    canvasHeight,
+                );
+
+                context.fillStyle = UIElement.color;
+                context.fillRect(x, y, width, height);
+                break;
+            default:
+                console.warn("Skipping unknown UI element type:", UIElement.type);
+        }
+    }
+}
+
+export { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection, drawUI };

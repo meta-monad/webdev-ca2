@@ -125,9 +125,8 @@ function generatePath(gameMap, tileTranslation, entities, origin, dest) {
             [vx,   vy+1],
         ];
         for (let [row, col] of neighbors) {
-                // valid coordinate
+            // check if neighbor is valid
             if (canTraverse(gameMap, tileTranslation, entities, row, col)) {
-                // TODO: check if tile is traversable
                 if (!visited[row][col]) {
                     visited[row][col] = [vx, vy]; // set previous node
                     explored += 1;

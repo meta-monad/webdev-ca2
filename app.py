@@ -34,12 +34,12 @@ def game():
 def begin_session():    
     player_name = request.form["player_name"]
     
-    if not len(player_name):
+    if not len(player_name.strip()):
         return make_response("error", "empty username")
 
     if player_name not in g.gamesessions and len(player_name):
         # player starts new game
-        player = Player(player_name, 2, 1, datetime.now()) # TODO: spawn positions
+        player = Player(2, 1, datetime.now()) # TODO: spawn positions
         g.gamesessions[player_name] = {
             "player" : player,
             "gameMap" : [
@@ -66,6 +66,7 @@ def begin_session():
         session["player"] = player
     else:
         session["player"] = g.gamesessions[player_name]["player"]
+    session["player_name"] = player_name
     session.modified = True
     save_game_state()
 
@@ -85,11 +86,11 @@ def set_state():
         x = int(request.form["x"])
         y = int(request.form["y"])
         
-        player = Player(session["player"].player_name, x ,y, datetime.now())
+        player = Player(x, y, datetime.now())
         session["player"] = player
         session.modified = True
 
-        g.gamesessions[session["player"].player_name]["player"] = player
+        g.gamesessions[session["player_name"]]["player"] = player
         save_game_state()
         return make_response("success", None)
     else:

@@ -1,4 +1,4 @@
-import { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection } from "./renderer.js";
+import { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection, drawUI } from "./renderer.js";
 import { processCamera, generatePath, eq_coord, enemyConstructor, generateEntityCombatScore, generatePlayerCombatScore } from "./game.js";
 import { makeRequest, saveGameState } from "./network.js";
 
@@ -7,7 +7,6 @@ let context;
 
 // game state information
 let player = {
-    player_name : null,
     position : {
         x: null,
         y: null
@@ -32,10 +31,12 @@ let combatQueue = [];
 let gameMode = "Exploring"; // Combat | Exploring
 let cursorMode = "Move"; // Move | Info | Attack
 
+// DEBUG ONLY
 function setCursor(val) {
     cursorMode = val;
 }
 globalThis.setCursor = setCursor;
+
 let gameCycle = {
     limit : null,
     queue : [],
@@ -126,6 +127,33 @@ let gameTickCounter = 0;
 // sprites
 let spriteMap = new Image();
 
+// UI
+// game UI renders from the same sprite map
+let UIElems = [
+    {
+        type : "fill",
+        color : "brown",
+        origin : "BL", // bottom left
+        width : "fill",
+        height : 128,
+    },
+    {
+        type : "fill",
+        color : "darkgoldenrod",
+        origin : "BC", // bottom center
+        width : 256,
+        height : 112,
+        y : 8,
+    },
+    {
+        type : "text",
+        color : "white",
+        origin : "BC", // bottom left
+        maxWidth : 256,
+        contents : "Boo",
+    },
+];
+
 document.addEventListener("DOMContentLoaded", init, false);
 
 function init() {
@@ -147,7 +175,7 @@ function game_init(player_name) {
 
         player.position.x = response.player.x;
         player.position.y = response.player.y;
-        player.player_name = response.player.player_name;
+        player.description = response.player.description;
         gameMap = response.gameMap;
 
         // process entities
@@ -211,7 +239,7 @@ function draw() {
     if (gameTickCounter % 3 === 0) { // 100ms
         // process entitites: non-combat
         for (let entity_index = 0; entity_index < entities.length; entity_index++) {
-            if (!(entity_index in combatQueue)) {
+            if (!(combatQueue.includes(entity_index))) {
                 let entity = entities[entity_index];
                 let engaged = entity.updateFunction(gameMap, player, gameTickCounter);
                 if (engaged) {
@@ -304,16 +332,12 @@ function draw() {
 
     drawPlayer(context, camera, player, tileWidth, tileHeight, canvas.width);
 
-    // navigated path
-    // const tile = tileTranslation[4];
-    // for (let [r, c] of path) {
-    //     drawTile(context, camera, tile, spriteMap, r, c, canvas.width, tileWidth, tileHeight);
-    // }
+    context.restore();
+
+    drawUI(context, UIElems, canvas.width, canvas.height);
     
     // camera
     processCamera(camera);
-
-    context.restore();
 }
 
 function mousemove(event) {
@@ -362,6 +386,15 @@ function click(event) {
                                 return "It looks infirm.";
                             }
                         })());
+                        break infoBlock;
+                    }
+
+                    // check for player
+                    if (eq_coord(
+                        [player.position.x, player.position.y],
+                        coords
+                    )) {
+                        console.log(player.description);
                         break infoBlock;
                     }
 

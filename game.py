@@ -8,13 +8,12 @@ def json_helper(obj):
         return str(obj)
 
 class Player:
-    def __init__(self, player_name, x, y, last_update):
-       self.player_name = player_name
-       self.x = x
-       self.y = y
-       self.last_update = last_update
+    def __init__(self, x, y, last_update):
+        self.description = """You look at yourself. Standing all alone in this barren wasteland. Will you ever make it?"""
+        self.x = x
+        self.y = y
+        self.last_update = last_update
 
-    # needed for .remove to work
     def __eq__(self, other):
         return self.player_name == other.player_name
     

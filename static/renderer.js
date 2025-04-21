@@ -192,7 +192,7 @@ function getTopCoords(originType, x, y, width, height, canvasWidth, canvasHeight
 function drawUI(context, UIElems, canvasWidth, canvasHeight) {
     for (let UIElement of UIElems) {
         switch (UIElement.type) {
-            case "fill":
+            case "fill": {
                 let width = UIElement.width;
                 if (width === "fill") {
                     width = canvasWidth;
@@ -215,6 +215,49 @@ function drawUI(context, UIElems, canvasWidth, canvasHeight) {
                 context.fillStyle = UIElement.color;
                 context.fillRect(x, y, width, height);
                 break;
+            }
+            case "text": {
+                let {x, y} = getTopCoords(
+                    UIElement.origin,
+                    UIElement.x ?? 0,
+                    UIElement.y ?? 0,
+                    UIElement.referenceWidth,
+                    UIElement.referenceHeight,
+                    canvasWidth,
+                    canvasHeight,
+                );
+
+                context.font = "12px sans-serif";
+                context.fillStyle = UIElement.color;
+
+                let words = UIElement.contents.split(' ');
+                let currentLine = words.shift();
+                let lineOffset = 12 + 2; // 16px line height, 2px line spacing
+                let line = 0;
+
+                while (words.length) {
+                    let currentWord = words.shift();
+                    if (context.measureText(currentLine + " " + currentWord).width < UIElement.referenceWidth) {
+                        currentLine += " " + currentWord;
+                    } else {
+                        context.fillText(
+                            currentLine,
+                            x,
+                            y + (line * lineOffset)
+                        );
+                        line += 1;
+                        currentLine = currentWord;
+                    }
+                }
+                // render the last remaining line
+                context.fillText(
+                    currentLine,
+                    x,
+                    y + (line * lineOffset)
+                );
+
+                break;
+            }
             default:
                 console.warn("Skipping unknown UI element type:", UIElement.type);
         }

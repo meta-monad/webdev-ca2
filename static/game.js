@@ -59,6 +59,34 @@ function generatePlayerCombatScore(player) {
     return 2;
 }
 
+function missChance(perception, distance) {
+    // magic numbers
+    return (distance**2) / (10 * perception);
+}
+
+function combatTurn(attacker, attackerWeapon, defender) {
+    if (Math.random() <= missChance(
+        attacker.attributes.perception, 
+        distance_pos(attacker.position, defender.position)
+        )
+    )) {
+        return "miss";
+    }
+    // 5% chance of a 'critical hit' to spice up combat
+    if (Math.random() <= 0.05) {
+        return "critical";
+    }
+    return "hit";
+}
+
+function distance_pos(a, b) {
+    // takes in position objects
+    return distance(
+        [a.x, a.y],
+        [b.x, b.y]
+    );
+}
+
 function distance(a, b) {
     // taxicab metric function for this grid
     return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);

@@ -1,3 +1,70 @@
+const tileWidth = 32;
+const tileHeight = 16;
+// displacement goes down
+const tileTranslation = [
+    // 0
+    {
+        x : 0,
+        y : 0,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false,
+        description : "An empty void. You stare into it, and it stares back.",
+    },
+    // 1
+    {
+        x : 0,
+        y : 16,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : true,
+        description : "Flat land. Nothing out of the ordinary.",
+    },
+    // 2
+    {
+        x : 32,
+        y : 32,
+        width : tileWidth,
+        height : tileHeight * 2,
+        displacement : -tileHeight,
+        traversable : true,
+        description : "A perfectly flat wall. It might be good cover.",
+    },
+    // 3
+    {
+        x : 0,
+        y : 32,
+        width : tileWidth,
+        height : tileHeight * 2,
+        traversable : true,
+        description : "An edge. I should be careful around it.",
+    },
+    // 4
+    {
+        x : 32,
+        y : 0,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false
+    },
+    // 5
+    {
+        x : 64,
+        y : 0,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false
+    },
+    // 6
+    {
+        x : 96,
+        y : 0,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false
+    },
+];
+
 function drawTile(context, camera, tile, spriteMap, row, col, canvasWidth, tileWidth, tileHeight) {
     const realX = 0.5 * (canvasWidth - tileWidth * camera.tileScale ) + 0.5 * (col - row) * tileWidth * camera.tileScale; 
     const realY = 0.5 * (col + row) * tileHeight * camera.tileScale;
@@ -276,4 +343,4 @@ function drawUI(context, UIElems, canvasWidth, canvasHeight) {
     }
 }
 
-export { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection, drawUI };
+export { tileWidth, tileHeight, tileTranslation, drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection, drawUI };

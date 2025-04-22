@@ -30,6 +30,10 @@ def index():
 def game():
     return render_template("game.html")
 
+@app.route("/mapeditor")
+def mapeditor():
+    return render_template("mapeditor.html")
+
 @app.route("/begin_session", methods=["POST"])
 def begin_session():    
     player_name = request.form["player_name"]

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block head %}
+<script src="{{ url_for('static', filename='mapeditor.js') }}" type="module"></script>
+{% endblock %}
+
+{% block body %}
+<section id="create_form">
+    <h1>Create map</h1>
+    <form>
+        <label for"">Map width</label>
+        <input id="width" name="width" type="number" required />
+        <br />
+        <label for"">Map height</label>
+        <input id="height" name="height" type="number" required />
+        <br />
+        <input type="submit" />
+    </form>
+    <p id="error"></p>
+</section>
+<section id="game_area" hidden>
+    <h1>Editor</h1>
+    <canvas width=512 height=512></canvas>
+    <br />
+    <label for="tile-selector">Tile selection</label>
+    <select id="tile-selector">
+    </select>
+    <input type="button" id="export-button" value="Export" />
+    <pre id="export-area">
+    </pre>
+    
+</section>
+{% endblock %}

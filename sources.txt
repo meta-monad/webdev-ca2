@@ -28,6 +28,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
 
 ## events
 https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button
+https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/change_event
 https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values
 https://developer.mozilla.org/en-US/docs/Games/Tutorials/2D_Breakout_game_pure_JavaScript/Mouse_controls
 
@@ -54,9 +55,11 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Defa
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules
 https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Async_JS - entire series
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await
 https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API - entire series
 https://developer.mozilla.org/en-US/docs/Web/API/TextMetrics
+https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement
 https://www.geeksforgeeks.org/how-to-select-a-random-element-from-array-in-javascript/

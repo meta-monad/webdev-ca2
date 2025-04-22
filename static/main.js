@@ -1,4 +1,4 @@
-import { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection, drawUI } from "./renderer.js";
+import { tileWidth, tileHeight, tileTranslation, drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection, drawUI } from "./renderer.js";
 import { processCamera, generatePath, eq_coord, enemyConstructor, generateEntityCombatScore, generatePlayerCombatScore, getGameTurns, combatTurn } from "./game.js";
 import { makeRequest, saveGameState } from "./network.js";
 
@@ -53,12 +53,6 @@ let combatQueue = [];
 let gameMode = "Exploring"; // Combat | Exploring
 let cursorMode = "Move"; // Move | Info | Attack
 
-// DEBUG ONLY
-function setCursor(val) {
-    cursorMode = val;
-}
-globalThis.setCursor = setCursor;
-
 let gameCycle = {
     capacity : null, // null is unlimited
     queue : [],
@@ -68,74 +62,7 @@ let playerCombatTurn = false;
 let playerMoved = false;
 
 let gameMap = [];
-const tileWidth = 32;
-const tileHeight = 16;
 let path = [];
-
-// displacement goes down
-const tileTranslation = [
-    // 0
-    {
-        x : 0,
-        y : 0,
-        width : tileWidth,
-        height : tileHeight,
-        traversable : false,
-        description : "An empty void. You stare into it, and it stares back.",
-    },
-    // 1
-    {
-        x : 0,
-        y : 16,
-        width : tileWidth,
-        height : tileHeight,
-        traversable : true,
-        description : "Flat land. Nothing out of the ordinary.",
-    },
-    // 2
-    {
-        x : 32,
-        y : 32,
-        width : tileWidth,
-        height : tileHeight * 2,
-        displacement : -tileHeight,
-        traversable : true,
-        description : "A perfectly flat wall. It might be good cover.",
-    },
-    // 3
-    {
-        x : 0,
-        y : 32,
-        width : tileWidth,
-        height : tileHeight * 2,
-        traversable : true,
-        description : "An edge. I should be careful around it.",
-    },
-    // 4
-    {
-        x : 32,
-        y : 0,
-        width : tileWidth,
-        height : tileHeight,
-        traversable : false
-    },
-    // 5
-    {
-        x : 64,
-        y : 0,
-        width : tileWidth,
-        height : tileHeight,
-        traversable : false
-    },
-    // 6
-    {
-        x : 96,
-        y : 0,
-        width : tileWidth,
-        height : tileHeight,
-        traversable : false
-    },
-];
 
 // fps
 // let now;
@@ -151,7 +78,7 @@ let displayFont = new FontFace(
 );
 
 // UI
-// aall game UI renders from the same sprite map
+// all game UI renders from the same sprite map
 let UIElems = [
     {
         type : "fill",

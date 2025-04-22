@@ -20,6 +20,10 @@ function enemyConstructor(args, position) {
             x: position[0],
             y: position[1],
         },
+        attributes : {
+            perception : 3,
+            agility: 2,
+        },
         internalState : {
             engaged : args.engaged ?? false,
             health : args.health ?? 10,
@@ -29,6 +33,8 @@ function enemyConstructor(args, position) {
         updateFunction : function (gameMap, player, tickCount) { // -> Option<Bool>
             if (this.internalState.engaged) {
                 // return is meaningless here
+                this.drawInfo.fillColor = "fuchsia";
+                console.log(args.name, " is engaging");
             } else {
                 if (
                     this.internalState.alive && 
@@ -38,9 +44,7 @@ function enemyConstructor(args, position) {
                     ) <= 3
                 ) {
                     // start of engagement
-                    this.drawInfo.fillColor = "fuchsia";
                     this.internalState.engaged = true;
-
                     return true;
                 }
                 return false; // never engaging
@@ -59,21 +63,29 @@ function generatePlayerCombatScore(player) {
     return 2;
 }
 
+function getGameTurns(entity) { // also applies to player
+    return 3 + Math.floor(entity.attributes.agility / 2);
+}
+
 function missChance(perception, distance) {
     // magic numbers
     return (distance**2) / (10 * perception);
 }
 
 function combatTurn(attacker, attackerWeapon, defender) {
+    let dist = distance_pos(attacker.position, defender.position);
     if (Math.random() <= missChance(
-        attacker.attributes.perception, 
-        distance_pos(attacker.position, defender.position)
-        )
+        attacker.attributes.perception,
+        dist * attackerWeapon.falloff
     )) {
         return "miss";
     }
+    if (attackerWeapon.range && attackerWeapon.range < dist) {
+        // used for melee combat
+        return "out-of-range";
+    }
     // 5% chance of a 'critical hit' to spice up combat
-    if (Math.random() <= 0.05) {
+    if (Math.random() <= 0.05 + attackerWeapon.criticalChance) {
         return "critical";
     }
     return "hit";
@@ -114,11 +126,11 @@ function canTraverse(gameMap, tileTranslation, entities, row, col) {
 
 function processCamera(camera) {
     if (camera.moveLeft) {
-        camera.x -= camera.speed;
-        camera.mouseX += camera.speed;
-    } else if (camera.moveRight) {
         camera.x += camera.speed;
         camera.mouseX -= camera.speed;
+    } else if (camera.moveRight) {
+        camera.x -= camera.speed;
+        camera.mouseX += camera.speed;
     } else if (camera.moveUp) {
         camera.y += camera.speed;
         camera.mouseY -= camera.speed;
@@ -166,13 +178,21 @@ function generatePath(gameMap, tileTranslation, entities, origin, dest) {
 
     let v = dest;
     let path = [dest];
-    while (!eq_coord(visited[v[0]][v[1]], origin)) { // TODO: walrus?
+    while (!eq_coord(visited[v[0]][v[1]], origin)) {
         path.unshift(visited[v[0]][v[1]]);
         v = visited[v[0]][v[1]];
     }
-    console.log(`Found path by exploring ${explored} nodes`);
-    console.log(path);
+    console.debug(`Found path by exploring ${explored} nodes`);
     return path;
 }
 
-export { processCamera, generatePath, eq_coord, enemyConstructor, generateEntityCombatScore, generatePlayerCombatScore }; 
+export {
+    processCamera,
+    generatePath,
+    eq_coord,
+    enemyConstructor,
+    generateEntityCombatScore,
+    generatePlayerCombatScore,
+    getGameTurns,
+    combatTurn
+};

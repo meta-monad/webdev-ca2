@@ -8,6 +8,10 @@ https://en.wikipedia.org/wiki/Metric_space#Metrics_on_Euclidean_spaces
 https://docs.python.org/3/library/json.html#json.dump
 https://docs.python.org/3/tutorial/datastructures.html#dictionaries
 
+# Assets
+
+https://www.geeksforgeeks.org/how-to-select-a-random-element-from-array-in-javascript/
+
 # JavaScript
 
 ## array operations
@@ -55,3 +59,4 @@ https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Async_
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await
 https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API - entire series
 https://developer.mozilla.org/en-US/docs/Web/API/TextMetrics
+https://www.geeksforgeeks.org/how-to-select-a-random-element-from-array-in-javascript/

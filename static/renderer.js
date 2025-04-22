@@ -191,8 +191,9 @@ function getTopCoords(originType, x, y, width, height, canvasWidth, canvasHeight
 
 function drawUI(context, UIElems, canvasWidth, canvasHeight) {
     for (let UIElement of UIElems) {
+        let x, y;
         switch (UIElement.type) {
-            case "fill": {
+            case "fill":
                 let width = UIElement.width;
                 if (width === "fill") {
                     width = canvasWidth;
@@ -202,7 +203,7 @@ function drawUI(context, UIElems, canvasWidth, canvasHeight) {
                 if (height === "fill") {
                     height = canvasWidth;
                 }
-                let {x, y} = getTopCoords(
+                ({x, y} = getTopCoords(
                     UIElement.origin,
                     UIElement.x ?? 0,
                     UIElement.y ?? 0,
@@ -210,14 +211,13 @@ function drawUI(context, UIElems, canvasWidth, canvasHeight) {
                     height,
                     canvasWidth,
                     canvasHeight,
-                );
+                ));
 
                 context.fillStyle = UIElement.color;
                 context.fillRect(x, y, width, height);
                 break;
-            }
-            case "text": {
-                let {x, y} = getTopCoords(
+            case "text":
+                ({x, y} = getTopCoords(
                     UIElement.origin,
                     UIElement.x ?? 0,
                     UIElement.y ?? 0,
@@ -225,18 +225,31 @@ function drawUI(context, UIElems, canvasWidth, canvasHeight) {
                     UIElement.referenceHeight,
                     canvasWidth,
                     canvasHeight,
-                );
+                ));
 
-                context.font = "12px sans-serif";
+                context.font = "12px \"CourierPrime\"";
                 context.fillStyle = UIElement.color;
 
-                let words = UIElement.contents.split(' ');
+                // some UI text might reflect a dynamic variable
+                let renderedText;
+                if (typeof UIElement.contents === "string") {
+                    renderedText = UIElement.contents;
+                } else if (typeof UIElement.contents === "function") {
+                    renderedText = UIElement.contents();
+                }
+
+                let words = renderedText.split(' ');
                 let currentLine = words.shift();
                 let lineOffset = 12 + 2; // 16px line height, 2px line spacing
                 let line = 0;
 
                 while (words.length) {
                     let currentWord = words.shift();
+                    if (currentWord.includes('\n')) {
+                        let newWords = currentWord.split('\n');
+                        currentWord = newWords[0];
+                        words.unshift(...newWords.splice(1));
+                    }
                     if (context.measureText(currentLine + " " + currentWord).width < UIElement.referenceWidth) {
                         currentLine += " " + currentWord;
                     } else {
@@ -257,7 +270,6 @@ function drawUI(context, UIElems, canvasWidth, canvasHeight) {
                 );
 
                 break;
-            }
             default:
                 console.warn("Skipping unknown UI element type:", UIElement.type);
         }

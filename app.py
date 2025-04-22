@@ -39,7 +39,10 @@ def begin_session():
 
     if player_name not in g.gamesessions and len(player_name):
         # player starts new game
-        player = Player(2, 1, datetime.now()) # TODO: spawn positions
+
+        # TODO: health should depend on endurance
+        # TODO: spawn positions
+        player = Player(2, 1, datetime.now(), 10, 10)
         g.gamesessions[player_name] = {
             "player" : player,
             "gameMap" : [
@@ -85,8 +88,10 @@ def set_state():
 
         x = int(request.form["x"])
         y = int(request.form["y"])
+        hp = int(request.form["HP"])
+        maxHP = int(request.form["maxHP"])
         
-        player = Player(x, y, datetime.now())
+        player = Player(x, y, datetime.now(), hp, maxHP)
         session["player"] = player
         session.modified = True
 

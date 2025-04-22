@@ -1,5 +1,5 @@
 import { drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection, drawUI } from "./renderer.js";
-import { processCamera, generatePath, eq_coord, enemyConstructor, generateEntityCombatScore, generatePlayerCombatScore } from "./game.js";
+import { processCamera, generatePath, eq_coord, enemyConstructor, generateEntityCombatScore, generatePlayerCombatScore, getGameTurns, combatTurn } from "./game.js";
 import { makeRequest, saveGameState } from "./network.js";
 
 let canvas;
@@ -13,6 +13,28 @@ let player = {
     },
     width : 8,
     height : 16,
+    attributes : { // TODO
+        perception : 5,
+        agility: 5,
+    },
+    activeWeapon : 0,
+    inventory : [
+        {
+            type : "weapon",
+            name : "pistol",
+            falloff : 1,
+            criticalChance : 0,
+            baseDamage : 3,
+        },
+        {
+            type : "weapon",
+            name : "fist",
+            falloff : 1,
+            range : 1,
+            criticalChance : 0.05, // +5% extra
+            baseDamage : 2,
+        }
+    ]
 };
 let camera = {
     x : 0,
@@ -38,7 +60,7 @@ function setCursor(val) {
 globalThis.setCursor = setCursor;
 
 let gameCycle = {
-    limit : null,
+    capacity : null, // null is unlimited
     queue : [],
 }
 // block the normal game cycle from updating, but not rendering
@@ -121,11 +143,15 @@ let then = Date.now();
 const fpsInterval = 1000 / 30; // 30 frames per 1000 milliseconds
 let gameTickCounter = 0;
 
-// sprites
+// remote assets
 let spriteMap = new Image();
+let displayFont = new FontFace(
+    "CourierPrime",
+    "url(static/CourierPrime-Regular.ttf)"
+);
 
 // UI
-// game UI renders from the same sprite map
+// aall game UI renders from the same sprite map
 let UIElems = [
     {
         type : "fill",
@@ -143,29 +169,62 @@ let UIElems = [
         y : 8,
     },
     {
+        type : "fill",
+        color : "darkgoldenrod",
+        origin : "BL", // bottom left
+        width : 100,
+        height : 112,
+        y : 8,
+        x : 8,
+    },
+    {
+        type : "fill",
+        color : "darkgoldenrod",
+        origin : "BR", // bottom right
+        width : 100,
+        height : 112,
+        y : 8,
+        x : 8,
+    },
+    {
         type : "text",
         color : "black",
-        origin : "BC", // bottom left
+        origin : "BC", // bottom center
         referenceWidth : 247,
         referenceHeight : 108,
-        contents : "Boo",
+        contents : "",
         x: 4,
         y: -8,
     },
+    {
+        type : "text",
+        color : "black",
+        origin : "BL", // bottom left
+        referenceWidth : 91,
+        referenceHeight : 108,
+        contents : () => {
+            if (gameMode === "Combat") {
+                return `Health: ${player.health}\n` + 
+                    `Actions: ${gameCycle.capacity}\n` +
+                    `State: ${gameMode}`;
+            } else {
+                return `Health: ${player.health}\n` + 
+                    `State: ${gameMode}`;
+            }
+        },
+        x: 12,
+        y: -4,
+    },
 ];
 
-// this is a reference, see sources.txt
-let textDisplay = UIElems[2];
-
-function setText(text) {
-    textDisplay.contents = text;
-}
-globalThis.setText = setText;
+// this is actually a reference
+let textDisplay = UIElems[4];
 
 document.addEventListener("DOMContentLoaded", init, false);
 
 function init() {
     let form = document.querySelector("form");
+    document.fonts.add(displayFont);
     form.addEventListener("submit", (event) => {
         event.preventDefault();
 
@@ -184,6 +243,8 @@ function game_init(player_name) {
         player.position.x = response.player.x;
         player.position.y = response.player.y;
         player.description = response.player.description;
+        player.health = response.player.health;
+        player.maxHealth = response.player.maxHealth;
         gameMap = response.gameMap;
 
         // process entities
@@ -254,8 +315,9 @@ function draw() {
                 let entity = entities[entity_index];
                 let engaged = entity.updateFunction(gameMap, player, gameTickCounter);
                 if (engaged) {
-                    gameCycle.queue = [];
                     gameMode = "Combat";
+                    gameCycle.capacity = getGameTurns(player);
+                    gameCycle.queue = [];
                     let combatScore = generateEntityCombatScore(entity);
                     combatQueue.push([entity_index, combatScore]);
                 }
@@ -281,22 +343,23 @@ function draw() {
             // 4.1. set playerCombatTurn = true to block further processing
             // 4.2. set playerMoved = true
             // 4.3. break and finish rendering up the frame
-            // 5. wait until gameCycle.queue fills up
-            // 5.1 simultaneously process gameCycle's actions
+            // 5. wait until gameCycle.capacity depletes
+            // 5.1 simultaneously process gameCycle.queue's actions
             // 5.2 set playerCombatTurn to false
             // 6. code gets back to step 2.
             // How do we avoid re-processing entities with a higher combat score than the player?
-            // - playerMoved = false => process
-            // - playerMoved = true && combatScore <= player
+            // - playerMoved = false --> process
+            // - playerMoved = true && combatScore <= player --> process 
             // 7. exit for loop
             // 7.1 if playerCombatTurn to false, we have finished a combat turn and playerMoved must be reset
             for (let [entity_index, combatScore] of combatQueue) {
                 let entity = entities[entity_index];
 
                 if (!playerMoved && playerScore > combatScore) {
+                    console.log("player turn");
                     playerMoved = true;
                     playerCombatTurn = true;
-                    gameCycle.limit = 5; // 5 moves
+                    gameCycle.capacity = getGameTurns(player);
                     break;
                 } else if (!playerMoved || (playerMoved && playerScore >= combatScore)) {
                     entity.updateFunction();
@@ -331,10 +394,8 @@ function draw() {
         if (gameTickCounter % 300 === 0) { // 10s
             saveGameState(player);
         }
-    } else if (
-        gameTickCounter % 3 === 0 
-        && playerCombatCycle) {
-            processPlayerActions();
+    } else if (gameTickCounter % 3 === 0 && playerCombatTurn) {
+        processPlayerActions();
     }
 
     /// rendering
@@ -373,12 +434,52 @@ function processPlayerActions() {
         let action = gameCycle.queue.shift();
         switch (action.actionType) {
             case "move":
-                console.log("move");
                 [player.position.x, player.position.y] = action.position;
+                break;
+            case "attack":
+                let weapon = player.inventory[player.activeWeapon];
+                let hitResult = combatTurn(player, weapon, action.target);
+                let damage; // switches aren't scoped -_-
+                switch (hitResult) {
+                    case "miss":
+                        textDisplay.contents = "You miss.";
+                        if (Math.random() >= 0.2) {
+                            textDisplay.content += ` ${action.target.name} looks at you slightly perplexed.`;
+                        }
+                        break;
+                    case "out-of-range":
+                        textDisplay.contents = "You hit the air as the target is out of range.";
+                        if (Math.random() >= 0.5) {
+                            textDisplay.content += " What were you thinking?";
+                        }
+                        break;
+                    case "hit":
+                        damage = weapon.baseDamage;
+                        action.target.internalState.health -= damage;
+                        textDisplay.contents = `You hit ${action.target.name} for ${damage} points.`;
+                        break;
+                    case "critical":
+                        damage = Math.ceil(weapon.baseDamage * (Math.random() + 1));
+                        action.target.internalState.health -= damage;
+                        textDisplay.contents = `You score a critical hit on ${action.target.name} for ${damage} points with your trusty ${weapon.name}.`;
+                        if (damage >= 5) {
+                            let criticalMessages = [
+                                " It wails in pain.",
+                                " It coughs up some blood.",
+                                " Its body contorts for a second.",
+                                " That will surely leave a mark.",
+                            ]
+                            textDisplay.contents += criticalMessages[Math.floor(Math.random() * criticalMessages.length)];
+                        }
+                        break;
+                }
                 break;
             default:
                 console.warn("unknown action type in game cycle: ", action);
         }
+    }
+    if (gameCycle.capacity === 0) {
+        playerCombatTurn = false;
     }
 }
 
@@ -388,23 +489,36 @@ function mousemove(event) {
 }
 
 function mouseup(event) {
-    event.preventDefault();
+    event.preventDefault(); // TODO: prevent context menu
     switch (event.button) {
         case 0:
+            let coords = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
             switch (cursorMode) {
                 case "Move":
-                    let dest = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
-
                     path = generatePath(
                         gameMap,
                         tileTranslation,
                         entities,
                         [player.position.x, player.position.y],
-                        dest
+                        coords
                     );
 
-                    // TODO
-                    if (gameCycle.queue.length < gameCycle.limit || !gameCycle.limit) { // gameCycle.limit is nullable
+                    let moves = path.length;
+                    if (gameCycle.capacity !== null) {
+                        moves = Math.min(path.length, gameCycle.capacity);
+                        gameCycle.queue.push(...path.map((pathNode) => {
+                            return {
+                                actionType : "move",
+                                position : pathNode
+                            }
+                        }).slice(
+                            0,
+                            Math.max(gameCycle.capacity, 0)
+                        ));
+                        gameCycle.capacity -= moves; 
+                        gameCycle.capacity = Math.max(gameCycle.capacity, 0);
+                        // Math.max(gameCycle.capacity, 0) just in case two calls of this function are running
+                    } else {
                         gameCycle.queue.push(...path.map((pathNode) => {
                             return {
                                 actionType : "move",
@@ -412,15 +526,19 @@ function mouseup(event) {
                             }
                         }));
                     }
+                    if (player.health === player.maxHealth) {
+                        textDisplay.contents = `You sprint ${moves} tiles away.`;
+                    } else if (player.health >= 3) {
+                        textDisplay.contents = `You move ${moves} tiles.`;
+                    } else { // player.health <= 2
+                        textDisplay.contents = `You crawl your way across ${moves} tiles`;
+                    }
                     break;
                 case "Info" :
-                    let coords = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
-
                     infoBlock : {
                         // check for an entity
                         for (let entity of entities) {
                             if (eq_coord([entity.position.x, entity.position.y], coords)) {
-                                // TODO
                                 textDisplay.contents = entity.description + " " + (() => {
                                     if (entity.internalState.maxHealth === entity.internalState.health) {
                                         return "It is unscathed. ";
@@ -456,11 +574,36 @@ function mouseup(event) {
 
                         break;
                     }
+                    break;
                 case "Attack":
-                    // TODO
+                    // check for the presence of an entity
+                    let target_index;
+                    for (let entity_index = 0; entity_index < entities.length; entity_index+=1) {
+                        let entity = entities[entity_index];
+                        if (eq_coord([entity.position.x, entity.position.y], coords)) {
+                            target_index = entity_index;
+                        }
+                    }
+                    if (target_index !== undefined && (gameCycle.capacity >= 2 || gameCycle.capacity === null)) {
+                        let target = entities[target_index];
+                        if (gameMode !== "Combat") {
+                            gameMode = "Combat";
+                            playerCombatTurn = true;
+                            target.internalState.engaged = true;
+                            gameCycle.capacity = getGameTurns(player) - 1;
+                            gameCycle.queue = [];
+                            let combatScore = generateEntityCombatScore(target);
+                            combatQueue.push([target_index, combatScore]);
+                        }
+                        gameCycle.queue.push({
+                            actionType: "attack",
+                            target: target
+                        });
+                        gameCycle.capacity -= 2;
+                    }
                     break;
                 default:
-                    console.warn("Click with invalid cursorMode");
+                    console.warn("Click with an invalid cursorMode");
             }
             break;
         case 2:
@@ -483,31 +626,45 @@ function keydown(event) {
         event.preventDefault();
     }
 
-    if (key === "ArrowLeft") {
-        camera.moveLeft = true;
-    } else if (key === "ArrowRight") {
-        camera.moveRight = true;
-    } else if (key === "ArrowUp") {
-        camera.moveUp = true;
-    } else if (key === "ArrowDown") {
-        camera.moveDown = true;
+    switch (key) {
+        case "ArrowLeft":
+            camera.moveLeft = true;
+            break;
+        case "ArrowRight":
+            camera.moveRight = true;
+            break;
+        case "ArrowUp":
+            camera.moveUp = true;
+            break;
+        case "ArrowDown":
+            camera.moveDown = true;
+            break;
     }
 }
 
 function keyup(event) {
     let key = event.key;
-    if (key === "ArrowLeft") {
-        camera.moveLeft = false;
-    } else if (key === "ArrowRight") {
-        camera.moveRight = false;
-    } else if (key === "ArrowUp") {
-        camera.moveUp = false;
-    } else if (key === "ArrowDown") {
-        camera.moveDown = false;
-    } else if (key === "+") {
-        camera.tileScale += 1;
-    } else if (key === "-" && camera.tileScale > 1) {
-        camera.tileScale -= 1;
+    switch (key) {
+        case "ArrowLeft":
+            camera.moveLeft = false;
+            break;
+        case "ArrowRight":
+            camera.moveRight = false;
+            break;
+        case "ArrowUp":
+            camera.moveUp = false;
+            break;
+        case "ArrowDown":
+            camera.moveDown = false;
+            break;
+        case "+":
+            camera.tileScale += 1;
+            break;
+        case "-":
+            if (camera.tileScale > 1) {
+                camera.tileScale -= 1;
+            }
+            break;
     }
 }
 

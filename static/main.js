@@ -14,6 +14,7 @@ let player = {
     width : 8,
     height : 16,
     attributes : { // TODO
+        endurance : 5,
         perception : 5,
         agility: 5,
     },
@@ -155,14 +156,19 @@ function init() {
     form.addEventListener("submit", (event) => {
         event.preventDefault();
 
-        let player_name = document.getElementById("player_name").value;
-        game_init(player_name);
+        game_init();
     });
 }
 
-function game_init(player_name) {
+function game_init() {
+    let endurance = document.getElementById("endurance").value;
+    let perception = document.getElementById("perception").value;
+    let agility = document.getElementById("agility").value;
+
     let data = new FormData();
-    data.append("player_name", player_name);
+    data.append("endurance", endurance);
+    data.append("perception", perception);
+    data.append("agility", agility);
 
     makeRequest("./begin_session", data, (response) => {
         console.log(response);
@@ -316,7 +322,7 @@ function draw() {
         }
 
         // auto-save
-        if (gameTickCounter % 300 === 0) { // 10s
+        if (gameTickCounter % 300 === 0 && document.getElementById("guest-marker") === null) { // 10s
             saveGameState(player);
         }
     } else if (gameTickCounter % 3 === 0 && playerCombatTurn) {

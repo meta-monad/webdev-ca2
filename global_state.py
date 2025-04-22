@@ -15,7 +15,15 @@ class GlobalState():
             data = json.load(f)
         for player_name in data.keys():
             player_raw = data[player_name]["player"]
-            data[player_name]["player"] = game.Player(player_raw["x"], player_raw["y"], player_raw["last_update"], player_raw["health"], player_raw["maxHealth"])
+            data[player_name]["player"] = game.Player(
+                    player_raw["x"], player_raw["y"],
+                    player_raw["last_update"], 
+                    player_raw["endurance"], 
+                    player_raw["perception"], 
+                    player_raw["agility"], 
+                    player_raw["health"], 
+                    player_raw["maxHealth"]
+            )
         return data
     
     def set_data(self, data):

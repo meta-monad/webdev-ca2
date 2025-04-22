@@ -167,7 +167,7 @@ function canTraverse(gameMap, tileTranslation, entities, row, col) {
         && col < gameMap[row].length
         && (tileTranslation[gameMap[row][col]]?.traversable ?? false)
         && entities.every(e => {
-            return (row != e.position.x) || (col != e.position.y);
+            return ((row != e.position.x) || (col != e.position.y)) && e.internalState.alive;
         })
     );
 }

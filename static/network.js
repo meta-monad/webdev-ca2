@@ -42,7 +42,6 @@ async function saveGameState(player) {
     player_data.append("x", player.position.x);
     player_data.append("y", player.position.y);
     player_data.append("HP", player.health);
-    player_data.append("maxHP", player.maxHealth);
     return makeRequest("./save_game", player_data, empty, empty);
 }
 

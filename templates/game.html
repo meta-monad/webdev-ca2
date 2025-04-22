@@ -4,13 +4,25 @@
 {% endblock %}
 
 {% block body %}
+{% if "user" not in session %}
+<p id="guest-marker">Playing as a guest</p>
+{% endif %}
 <section id="join_form">
     <h1>Join game</h1>
     <form>
-        <label for"">Player name</label>
-        <input id="player_name" name="player_name" type="text" required />
+        {% if "player" in session %}
+        <p>You are already in a session</p>
+        {% endif %}
+        <label for="endurance">Endurance</label>
+        <input id="endurance" name="endurance" type="number" value={{ g.get("endurance", 5) }} required {{g.disabled}}/>
         <br />
-        <input type="submit" />
+        <label for="perception">Perception</label>
+        <input id="perception" name="perception" type="number" value={{ g.get("perception", 5) }} required {{g.disabled}}/>
+        <br />
+        <label for="agility">Agility</label>
+        <input id="agility" name="agility" type="number" value={{ g.get("agility", 5) }} required {{g.disabled}}/>
+        <br /Play>
+        <input type="submit" value="Play"/>
     </form>
     <p id="error"></p>
 </section>

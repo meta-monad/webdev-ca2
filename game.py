@@ -8,13 +8,21 @@ def json_helper(obj):
         return str(obj)
 
 class Player:
-    def __init__(self, x, y, last_update, health, maxHealth = 10):
+    def __init__(self, x, y, last_update, endurance, perception, agility, health, maxHealth = 10):
         self.description = """You look at yourself. Standing all alone in this barren wasteland. Will you ever make it?"""
         self.x = x
         self.y = y
         self.last_update = last_update
+        self.endurance = endurance
+        self.perception = perception
+        self.agility = agility
         self.health = health
         self.maxHealth = maxHealth
+
+    def update(self, x, y, health):
+        self.x = x
+        self.y = y
+        self.health = health
 
     def __eq__(self, other):
         return self.player_name == other.player_name

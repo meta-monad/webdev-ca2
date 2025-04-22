@@ -9,7 +9,17 @@
         <title>{{ title }}</title>
     </head>
     <body>
-        {% block body %}
-        {% endblock %}
+        <header>
+            {% if "user" in session %}
+            <a href="{{ url_for('logout') }}">Log out</a>
+            {% else %}
+            <a href="{{ url_for('login') }}">Log in</a>
+            <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </header>
+        <main>
+            {% block body %}
+            {% endblock %}
+        </main>
     </body>
 </html>

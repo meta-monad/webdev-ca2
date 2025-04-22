@@ -1,4 +1,8 @@
 {% extends "base.html" %}
 {% block body %}
-Play the game: <a href="{{ url_for('game') }}">here</a>.
+<section class="centered">
+<h1>Forest</h1>
+<p>Play the game <a href="{{ url_for('game') }}">here</a>.</p>
+<p>Instructions <a href="{{ url_for('instructions') }}">here</a></p>
+<p>Legal information and sources <a href="{{ url_for('static', filename='sources.txt') }}">here</a></p>
 {% endblock %}

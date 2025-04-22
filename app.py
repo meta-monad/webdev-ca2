@@ -39,6 +39,10 @@ def login_required(view):
 def index():
     return render_template("index.html")
 
+@app.route("/instructions")
+def instructions():
+    return render_template("instructions.html", title="Guide")
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     form = registrationForm()

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>How to play</h1>
+<p>Are you confused about playing the game? This page will explain the controls and mechanics of this game.</p>
+<h2>Controls</h2>
+<table>
+    <tr>
+        <th scope="col">Control</th>
+        <th scope="col">Description</th>
+    </tr>
+    <tr>
+        <td>Right Click</td>
+        <td>Iterate <a href="#cursor-modes">cursor modes</a></td>
+    </tr>
+    <tr>
+        <td>Plus key</td>
+        <td>Zooms in on the map</td>
+    </tr>
+    <tr>
+        <td>Minus key</td>
+        <td>Zooms out of the map</td>
+    </tr>
+    <tr>
+        <td>Arrow keys</td>
+        <td>Move the map's view</td>
+    </tr>
+</table>
+<h2>Mechanics</h2>
+<h3 id="cursor-modes">Cursor modes</h3>
+<p>
+    The cursor serves as a multi-purpose tool in this videogame. By default, it start off in <i>Move</i> mode with a <b>yellow</b> outline. In this move, clicks will instruct the player character to find a way to the location specified. In <i>Attack</i> mode, the cursor turns <b>red</b> as a click now becomes an attack. Be careful with this one. Some enemies might be sleeping. And last, but not least, the <i>Info</i> mode with its <b>blue</b> highlight lets you learn about the world around you, by providing a description of the objects you click on.
+</p>
+<h3>Player attributes</h3>
+<p>
+    The 3 core player attributes lets you choose your own playstyle. They influence a variety of aspects in the game from movement speed to combat. At a maximum of 15 points in total, each attribute ranges from 1 to 10. Let's break them down individually.
+</p>
+<ul>
+    <li><b>Endurance</b>: How tough your character is. It determines how much damage can you soak up before passing out.</li>
+    <li><b>Perception</b>: How good is the vision of your character. Higher perception makes your aim better with lower chances of a miss. It may also help your turn come sooner in <a href="#combat-cycle">combat cycles.</a></li>
+    <li><b>Agility</b>: With a more agile character, you are able to take more action in combat.</li>
+</ul>
+<h3 id="combat-cycle">Combat</h3>
+<p>
+Combat is a cycle of every participant, which repeats until all but one are dead. During combat, the order is determined by a <i>combat score</i> which is calculated based on the perception attribute. During each turn, every entity and the player have a set number of actions alloted to them. Moving 1 tile takes up 1 action. Attacking (whether successful or not) takes up 2. During combat, a weapon might miss, make a hit, or even make a critical hit (up to double the damage).
+</p>
+{% endblock %}

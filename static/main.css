@@ -1,5 +1,53 @@
+:root {
+    --indigo-dye: #2b4162ff;
+    --paynes-gray: #385f71ff;
+    --maya-blue: #55c1ffff;
+    --magnolia: #f5f0f6ff;
+    --amaranth-purple: #a63446ff;
+}
+
+body {
+    margin: 0;
+}
+
+header {
+    display: flex;
+    background-color: var(--indigo-dye);
+    padding: 0.6em;
+    color: white;
+}
+
+header a {
+    color: white;
+    text-decoration: none;
+    padding-left: 1em;
+}
+
+main {
+    margin: 1em;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid black; 
+    text-align: center;
+    padding: 0.2em;
+}
+
+
 canvas {
     border: 1px solid black;
     margin: 0 auto;
     cursor: none;
+}
+
+.centered {
+    text-align: center;
+}
+
+#game-area {
+    text-align: center;
 }

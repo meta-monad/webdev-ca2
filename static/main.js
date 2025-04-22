@@ -260,7 +260,6 @@ function game_init(player_name) {
             }
             if (state) {
                 // state is undefined or false: both are falsy
-                console.log(state);
                 entities.push(state);
             } else if (state === false) {
                 console.warn("Unable to create entity with constructor:\"", entity.constructor, "\", ignoring");
@@ -311,9 +310,9 @@ function draw() {
 
         // process entitites: non-combat
         for (let entity_index = 0; entity_index < entities.length; entity_index++) {
-            if (!(combatQueue.includes(entity_index))) {
+            if (!(combatQueue.map(([ei]) => ei).includes(entity_index))) {
                 let entity = entities[entity_index];
-                let engaged = entity.updateFunction(gameMap, player, gameTickCounter);
+                let engaged = entity.updateFunction(gameMap, tileTranslation, entities, gameCycle, player, gameTickCounter);
                 if (engaged) {
                     gameMode = "Combat";
                     gameCycle.capacity = getGameTurns(player);
@@ -362,12 +361,11 @@ function draw() {
                     gameCycle.capacity = getGameTurns(player);
                     break;
                 } else if (!playerMoved || (playerMoved && playerScore >= combatScore)) {
-                    entity.updateFunction();
-                    if (entity.internalState.health === 0) {
+                    entity.updateFunction(gameMap, tileTranslation, entities, gameCycle, player, gameTickCounter);
+                    if (!entity.internalState.alive) {
                         combatQueue = combatQueue.filter((element) => 
                             element[0] != entity_index
                         );
-                        entity.internalState.alive = false;
 
                         if (combatQueue.length === 0) {
                             gameMode = "Exploring";
@@ -439,6 +437,20 @@ function processPlayerActions() {
             case "attack":
                 let weapon = player.inventory[player.activeWeapon];
                 let hitResult = combatTurn(player, weapon, action.target);
+                if (!action.target.internalState.alive) {
+                    switch (hitResult) {
+                        case "miss":
+                        case "out-of-range":
+                            // do nothing
+                            break;
+                        case "hit":
+                        case "critical":
+                            textDisplay.content = "You hit the lifeless corpse.";
+                            break;
+                    }
+                    break;
+                }
+
                 let damage; // switches aren't scoped -_-
                 switch (hitResult) {
                     case "miss":
@@ -474,6 +486,31 @@ function processPlayerActions() {
                         break;
                 }
                 break;
+            case "entityAttack":
+                let entityHitResult = combatTurn(action.entity, action.weapon, action.target);
+                let entityDamage;
+                switch (entityHitResult) {
+                    case "miss":
+                        textDisplay.contents += "\nIts attack misses you.";
+                        break;
+                    case "out-of-range":
+                        textDisplay.contents += `\nNothing happens as ${action.entity.name} lashed out into the air.`;
+                        break;
+                    case "hit":
+                    case "critical":
+                        if (entityHitResult === "hit") {
+                            entityDamage = action.weapon.baseDamage;
+                        } else { // critical
+                            entityDamage = Math.ceil(action.weapon.baseDamage * (Math.random() + 1));
+                        }
+                        player.health -= entityDamage;
+                        textDisplay.contents += `\nYou are hit for ${entityDamage} points by ${action.entity.name}'s ${action.weapon.name}.`;
+                        break;
+                }
+                break;
+            case "entityMove":
+                [action.entity.position.x, action.entity.position.y] = action.position;
+                break;
             default:
                 console.warn("unknown action type in game cycle: ", action);
         }
@@ -502,6 +539,7 @@ function mouseup(event) {
                         [player.position.x, player.position.y],
                         coords
                     );
+                    console.debug(path);
 
                     let moves = path.length;
                     if (gameCycle.capacity !== null) {
@@ -540,6 +578,9 @@ function mouseup(event) {
                         for (let entity of entities) {
                             if (eq_coord([entity.position.x, entity.position.y], coords)) {
                                 textDisplay.contents = entity.description + " " + (() => {
+                                    if (!entity.internalState.alive) {
+                                        return "You are confident that it's dead.";
+                                    }
                                     if (entity.internalState.maxHealth === entity.internalState.health) {
                                         return "It is unscathed. ";
                                     } else if (entity.internalState.health >= 4) {
@@ -586,20 +627,22 @@ function mouseup(event) {
                     }
                     if (target_index !== undefined && (gameCycle.capacity >= 2 || gameCycle.capacity === null)) {
                         let target = entities[target_index];
-                        if (gameMode !== "Combat") {
+                        if (gameMode !== "Combat" && target.internalState.alive) {
                             gameMode = "Combat";
                             playerCombatTurn = true;
-                            target.internalState.engaged = true;
+                            target.internalState.makeEngaged();
                             gameCycle.capacity = getGameTurns(player) - 1;
                             gameCycle.queue = [];
                             let combatScore = generateEntityCombatScore(target);
                             combatQueue.push([target_index, combatScore]);
                         }
+                        if (gameMode === "Combat") {
+                            gameCycle.capacity -= 2;
+                        }
                         gameCycle.queue.push({
                             actionType: "attack",
                             target: target
                         });
-                        gameCycle.capacity -= 2;
                     }
                     break;
                 default:

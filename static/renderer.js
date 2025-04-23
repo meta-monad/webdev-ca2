@@ -4,6 +4,7 @@ const tileHeight = 16;
 const tileTranslation = [
     // 0
     {
+        name : "void",
         x : 0,
         y : 0,
         width : tileWidth,
@@ -13,6 +14,7 @@ const tileTranslation = [
     },
     // 1
     {
+        name : "land1",
         x : 0,
         y : 16,
         width : tileWidth,
@@ -22,6 +24,7 @@ const tileTranslation = [
     },
     // 2
     {
+        name : "land2",
         x : 32,
         y : 16,
         width : tileWidth,
@@ -31,6 +34,7 @@ const tileTranslation = [
     },
     // 3
     {
+        name : "land3",
         x : 64,
         y : 16,
         width : tileWidth,
@@ -40,6 +44,7 @@ const tileTranslation = [
     },
     // 4
     {
+        name : "water-edge-horizontal",
         x : 0,
         y : 32,
         width : tileWidth,
@@ -49,6 +54,7 @@ const tileTranslation = [
     },
     // 5
     {
+        name : "water-edge-vertical",
         x : 32,
         y : 32,
         width : tileWidth,
@@ -58,6 +64,7 @@ const tileTranslation = [
     },
     // 6
     {
+        name : "water-edge-corner",
         x : 64,
         y : 32,
         width : tileWidth,
@@ -67,7 +74,8 @@ const tileTranslation = [
     },
     // 7
     {
-        x : 32,
+        name : "water",
+        x : 96,
         y : 32,
         width : tileWidth,
         height : tileHeight,
@@ -76,17 +84,17 @@ const tileTranslation = [
     },
     // 8
     {
-        x : 0,
-        y : 48,
+        name : "selection1",
+        x : 32,
+        y : 0,
         width : tileWidth,
-        height : tileHeight * 2,
-        displacement : -tileHeight,
-        traversable : true,
-        description : "A perfectly flat wall. It might be good cover.",
+        height : tileHeight,
+        traversable : false
     },
     // 9
     {
-        x : 32,
+        name : "selection2",
+        x : 64,
         y : 0,
         width : tileWidth,
         height : tileHeight,
@@ -94,7 +102,8 @@ const tileTranslation = [
     },
     // 10
     {
-        x : 64,
+        name : "selection3",
+        x : 96,
         y : 0,
         width : tileWidth,
         height : tileHeight,
@@ -102,12 +111,38 @@ const tileTranslation = [
     },
     // 11
     {
-        x : 96,
-        y : 0,
+        name : "wall-horizontal",
+        x : 0,
+        y : 48,
         width : tileWidth,
-        height : tileHeight,
-        traversable : false
+        height : tileHeight * 2,
+        displacement : -tileHeight,
+        traversable : true,
+        description : "A wooden frame nearing collapse. It might be good cover.",
     },
+    // 12
+    {
+        name : "tank",
+        x : 32,
+        y : 48,
+        width : tileWidth,
+        height : tileHeight * 2,
+        displacement : -tileHeight,
+        traversable : false,
+        description : "Seemingly a tank that used to store some something that warrants a warning label.",
+    },
+    // 13
+    {
+        name : "tower-tall",
+        x: 0,
+        y: 80,
+        width: tileWidth,
+        height : tileHeight * 3,
+        displacement : -2 * tileHeight,
+        traversable : false,
+        description : "A towering steel truss that has been erroded. Flaskes of rust and peeled off painting surround the structure. You how much longer will it last."
+    },
+
 ];
 
 function drawTile(context, camera, tile, spriteMap, row, col, canvasWidth, tileWidth, tileHeight) {
@@ -136,6 +171,7 @@ function drawEntities(context, camera, spriteMap, entities, tileWidth, tileHeigh
     for (const entity of entities) {
         switch (entity.type) {
             case "enemy":
+            case "idle":
                 context.drawImage(
                     spriteMap,
                     entity.drawInfo.x, entity.drawInfo.y, entity.drawInfo.width, entity.drawInfo.height,
@@ -201,13 +237,13 @@ function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, cur
     let tile;
     switch (cursorMode) {
         case "Move":
-            tile = tileTranslation[9];
+            tile = tileTranslation[8];
             break;
         case "Info":
-            tile = tileTranslation[10];
+            tile = tileTranslation[9];
             break;
         case "Attack":
-            tile = tileTranslation[11];
+            tile = tileTranslation[10];
             break;
         default:
             console.warn("No interpret on selectionMode");

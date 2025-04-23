@@ -1,5 +1,6 @@
 import { tileWidth, tileHeight, tileTranslation, drawTile, drawMap, getMouseTile, drawSelection, drawUI } from "./renderer.js";
 import { processCamera } from "./game.js";
+import { makeRequest } from "./network.js";
 
 let canvas;
 let context;
@@ -47,24 +48,39 @@ function init() {
 }
 
 function game_init(width, height) {
-    // TODO: verify width & height are valid
     if (width <= 0 || height <= 0) {
         document.getElementById("error").innerText = "Map width and height must be positive"; 
         return;
     }
-    gameMap = Array(height).fill(undefined).map(() => {
-            return Array(width).fill(0)
+
+    for (let row = 0; row < height; row += 1) {
+        gameMap[row] = [];
+        for (let col = 0; col < height; col += 1) {
+            gameMap[row][col] = [1,2,3][Math.floor(Math.random() * 3)];
         }
-    );
+    }
+
+    let exportArea = document.getElementById("export-area");
+    exportArea.cols = width * 2;
+    exportArea.rows = height;
+    // gameMap = Array(height).fill(undefined).map(() => {
+    //         return Array(width).fill([1,2,3][Math.floor(Math.random() * 3)])
+    //     }
+    // );
 
     let tileSelector = document.getElementById("tile-selector");
     for (let tile_index = -1; tile_index < tileTranslation.length; tile_index += 1) {
         let option = document.createElement("option");
         option.value = tile_index;
-        option.text = tile_index;
+        if (tile_index !== -1) {
+            option.text= tileTranslation[tile_index].name;
+        } else {
+            option.text = "empty"
+        }
         tileSelector.appendChild(option);
     }
     let exportButton = document.getElementById("export-button");
+    let importButton = document.getElementById("import-button");
 
     document.getElementById("game_area").hidden = false;
     document.getElementById("create_form").hidden = true;
@@ -78,6 +94,7 @@ function game_init(width, height) {
     tileSelector.addEventListener("change", change, false);
     canvas.addEventListener("click", click, false);
     exportButton.addEventListener("click", exportMap, false);
+    importButton.addEventListener("click", importMap, false);
     window.addEventListener("mousemove", mousemove, false);
     window.addEventListener("keyup", keyup, false);
     window.addEventListener("keydown", keydown, false);
@@ -136,12 +153,26 @@ function change(event) {
 function click(event) {
     event.preventDefault();
     let coords = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
-    // TODO: out of bounds
-    gameMap[coords[0]][coords[1]] = tile;
+    try {
+        gameMap[coords[0]][coords[1]] = tile;
+    } catch {
+        // out of bound
+        console.warn("out of bounds click");
+    }
 }
 
 function exportMap(event) {
-   document.getElementById("export-area").innerText = gameMap.map(row => row.join(' ')).join('\n');
+    let raw_map = gameMap.map(row => row.join(' ')).join('\n');
+    document.getElementById("export-area").value = raw_map;
+
+    let data = new FormData();
+    data.append("name", document.getElementById("map-name").value);
+    data.append("map", raw_map);
+    makeRequest("./save_map", data, () => alert("Success!"), (error) => alert(error.cause ?? error));
+}
+
+function importMap(event) {
+    gameMap = document.getElementById("export-area").value.split('\n').map(line => line.split(' ').map(tile => Number(tile)));
 }
 
 function keydown(event) {

@@ -1,10 +1,6 @@
 const empty = () => {};
 
 async function makeRequest(url, data, successCallback, failCallback, method="POST") {
-    // let xhttp = new XMLHttpRequest();
-    // xhttp.addEventListener("readystatechange", readystatechange(xhttp, successCallback, failCallback), false);
-    // xhttp.open("POST", url, true);
-    // xhttp.send(data);
     fetch(url, {
         method: method,
         body : data

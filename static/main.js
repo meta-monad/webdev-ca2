@@ -1,5 +1,5 @@
 import { tileWidth, tileHeight, tileTranslation, drawTile, drawMap, drawEntities, drawPlayer, getMouseTile, drawSelection, drawUI } from "./renderer.js";
-import { processCamera, generatePath, eq_coord, enemyConstructor, generateEntityCombatScore, generatePlayerCombatScore, getGameTurns, combatTurn } from "./game.js";
+import { processCamera, generatePath, eq_coord, enemyConstructor, idleConstructor, generateEntityCombatScore, generatePlayerCombatScore, getGameTurns, combatTurn } from "./game.js";
 import { makeRequest, saveGameState } from "./network.js";
 
 let canvas;
@@ -43,13 +43,13 @@ let player = {
 };
 let camera = {
     x : 0,
-    y : 16,
+    y : 32,
     moveLeft : false,
     moveRight : false,
     moveUp : false,
     moveDown : false,
     speed : 10,
-    tileScale : 2,
+    tileScale : 3,
     mouseX : null,
     mouseY : null,
 };
@@ -165,11 +165,13 @@ function init() {
 }
 
 function game_init() {
+    let desiredMap = document.getElementById("game-map").value;
     let endurance = document.getElementById("endurance").value;
     let perception = document.getElementById("perception").value;
     let agility = document.getElementById("agility").value;
 
     let data = new FormData();
+    data.append("game-map", desiredMap);
     data.append("endurance", endurance);
     data.append("perception", perception);
     data.append("agility", agility);
@@ -197,8 +199,11 @@ function game_init() {
                 case "enemy":
                     state = enemyConstructor(entity.args, entity.position);
                     break;
+                case "idle":
+                    state = idleConstructor(entity.args, entity.position);
+                    break
                 default:
-                    console.warn("Unable to import entity with constructor:\"", entity.constructor, "\", ignoring");
+                    console.warn(`Unable to import entity with constructor: \"${entity.constructor}\", ignoring`);
             }
             if (state) {
                 // state is undefined or false: both are falsy
@@ -218,6 +223,7 @@ function game_init() {
 
         // "click" event only registers primary button
         canvas.addEventListener("mouseup", mouseup, false);
+        canvas.addEventListener("contextmenu", (e) => e.preventDefault(), false);
         window.addEventListener("mousemove", mousemove, false);
         window.addEventListener("keyup", keyup, false);
         window.addEventListener("keydown", keydown, false);
@@ -468,7 +474,7 @@ function mousemove(event) {
 }
 
 function mouseup(event) {
-    event.preventDefault(); // TODO: prevent context menu
+    event.preventDefault();
     switch (event.button) {
         case 0:
             let coords = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
@@ -519,7 +525,7 @@ function mouseup(event) {
                         // check for an entity
                         for (let entity of entities) {
                             if (eq_coord([entity.position.x, entity.position.y], coords)) {
-                                textDisplay.contents = entity.description + " " + (() => {
+                                textDisplay.contents = "You see " + entity.description + " " + (() => {
                                     if (!entity.internalState.alive) {
                                         return "You are confident that it's dead.";
                                     }

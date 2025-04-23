@@ -10,6 +10,7 @@
     </head>
     <body>
         <header>
+            <a href="{{ url_for('mapeditor') }}">Map editor</a>
             {% if "user" in session %}
             <a href="{{ url_for('logout') }}">Log out</a>
             {% else %}

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, session, redirect, url_for, g
 from forms import *
+from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_session import Session
 
@@ -7,6 +8,7 @@ from game import Player, make_response
 from global_state import GlobalState
 from database import get_db, close_db
 from datetime import datetime
+import os.path
 import json
 
 app = Flask(__name__)
@@ -106,6 +108,7 @@ def game():
     g.disabled = ""
     if "player" in session:
         g.disabled = "disabled"
+        g.gamemap = session["game-map"]
         g.endurance = session["player"].endurance
         g.perception = session["player"].perception
         g.agility = session["player"].agility
@@ -115,9 +118,64 @@ def game():
 def mapeditor():
     return render_template("mapeditor.html")
 
+@app.route("/save_map", methods=["POST"])
+def save_map():
+    if "user" not in session:
+        return make_response("error", "you must log in for this")
+    map_name = request.form["name"]
+    map_raw = request.form["map"]
+    # user_map = [ [ int(tile) for tile in line.split(' ') ] for line in map_raw.split('\n') ]
+
+    db = get_db()
+    clash = db.execute("""
+        SELECT *
+        FROM maps
+        WHERE creator = ?
+          AND title = ?
+               """, (session["user"]["username"], map_name)).fetchone()
+    if not clash:
+        db.execute("""
+                INSERT INTO maps
+                    (creator, title)
+                VALUES
+                    (?, ?)
+        """, (session["user"]["username"], map_name))
+        db.commit()
+        with open(f"./static/{session['user']['username']}-{map_name}.map", "w") as f:
+            f.write("spawn\n0 0\n")
+            f.write("map\n")
+            f.write(map_raw)
+        return make_response("success", {})
+    else:
+        return make_response("error", "A map with this name already exists.")
+
 @app.route("/begin_session", methods=["POST"])
 def begin_session():    
     user = session.get("user")
+    desired_map = request.form["game-map"]
+
+    safe_path = os.path.join("./static/", secure_filename(desired_map + ".map"))
+    if not os.path.isfile(safe_path):
+
+        return make_response("error", "map does not exist")
+    with open(safe_path, "r") as f:
+        lines = f.readlines()
+
+    lookFor = ""
+    spawn = [0, 0]
+    game_map = []
+    for line in lines:
+        line = line.strip()
+        if lookFor == "spawn":
+            spawn = [int(pos) for pos in line.split(' ')]
+            lookFor = ""
+        elif lookFor == "map":
+            row = [int(tile) for tile in line.split(' ')]
+            game_map.append(row)
+        elif line == "spawn":
+            lookFor = "spawn"
+        elif line == "map":
+            lookFor = "map"
 
     if not user or user["username"] not in g.gamesessions:
         endurance = int(request.form["endurance"])
@@ -125,8 +183,14 @@ def begin_session():
         agility = int(request.form["endurance"])
         if (endurance + perception + agility > 15):
             return make_response("error", "attibutes must sum to 15")
+        if (
+            endurance < 1 or endurance > 10 or
+            perception < 1 or perception > 10 or
+            agility < 1 or agility > 10
+        ):
+            return make_response("error", "attributes must be between 1 and 10 inclusive")
         player = Player(
-                0, 0, 
+                spawn[0], spawn[1], 
                 datetime.now(),
                 endurance,
                 perception,
@@ -136,32 +200,37 @@ def begin_session():
         )
         new_game = {
             "player" : player,
-            "gameMap" : [
-                            [1,1,2],
-                            [1,3,-1],
-                            [-1,1,3],
-                            [1,1,1],
-                            [1,1,1],
-                            [1,1,1],
-                            [3,3,3],
-                        ],
+            "gameMap" : game_map,
             "entities" : [
                 {
                     "constructor" : "enemy",
                     "position" : [5,0],
                     "args" : {
                         "name" : "crawler",
+                        "description" : "an ugly green blob with a hard cap covering its head.",
                         "attackPoints" : 3,
                         "drawX" : 8,
                         "drawY" : 502,
-                        "drawHeight": 10,
+                        "drawHeight" : 10,
                     }
-                }
+                },
+                {
+                    "constructor" : "idle",
+                    "position" : [0,2],
+                    "args" : {
+                        "name" : "oak tree",
+                        "description" : "a large oak tree. Its trunk gently swaying in the wind as it reaches up into the sky.",
+                        "drawX" : 16,
+                        "drawY" : 482,
+                        "drawHeight" : 30,
+                    }
+                },
             ]
         }
         if user:
             g.gamesessions[user["username"]] = new_game
             session["player"] = player
+            session["game-map"] = desired_map
             session.modified = True
             save_game_state()
         return make_response("success", new_game)

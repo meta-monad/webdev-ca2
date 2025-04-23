@@ -8,8 +8,9 @@ CREATE TABLE users (
 CREATE TABLE maps (
     map_id INTEGER NOT NULL,
     title TEXT NOT NULL,
-    creator INTEGER NOT NULL,
+    creator TEXT NOT NULL,
 
     PRIMARY KEY (map_id),
+    UNIQUE (title, creator),
     FOREIGN KEY(creator) REFERENCES users(username)
 );

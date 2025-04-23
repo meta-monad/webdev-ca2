@@ -13,6 +13,9 @@
         {% if "player" in session %}
         <p>You are already in a session</p>
         {% endif %}
+        <label for="game-map">Game map</label>
+        <input id="game-map" name="game-map" type="text" value={{ g.get("gamemap", "default") }} required {{g.disabled}}/>
+        <br />
         <label for="endurance">Endurance</label>
         <input id="endurance" name="endurance" type="number" value={{ g.get("endurance", 5) }} required {{g.disabled}}/>
         <br />

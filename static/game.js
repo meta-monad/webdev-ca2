@@ -1,6 +1,8 @@
 function enemyConstructor(args, position) {
     // check for the existence of required fields
     if (!("name" in args) ||
+        !("drawX" in args) ||
+        !("drawY" in args) ||
         !("attackPoints" in args) ||
         position.length !== 2
        ) {
@@ -13,14 +15,12 @@ function enemyConstructor(args, position) {
         drawInfo : {
             x : args.drawX,
             y : args.drawY,
+            originY : args.drawY,
             width : args.drawWidth ?? 8,
             height : args.drawHeight ?? 14,
         },
-        description : "An ugly green blob with a hard cap covering its head.",
-        position : {
-            x: position[0],
-            y: position[1],
-        },
+        description : args.description ?? "An unknown creature.",
+        position : pos_array_to_obj(position),
         weapon : {
             type : "weapon", // compatibility's sake
             name : "claw",
@@ -37,70 +37,106 @@ function enemyConstructor(args, position) {
             engaged : args.engaged ?? false,
             health : args.health ?? 10,
             maxHealth : args.maxHealth ?? 10,
-            alive : args.alive ?? true
+            alive : args.alive ?? true,
         },
-        makeEngaged : function () {
-            this.internalState.engaged = true;
-            this.drawInfo.y = args.drawY - this.drawInfo.height;
-            console.log(this.name + " has been engaged");
-        },
-        updateFunction : function (gameMap, tileTranslation, entities, gameCycle, player, tickCount) { // -> Option<Bool>
-            if (this.internalState.health <= 0) {
-                this.internalState.alive = false;
-                this.internalState.engaged = false;
-                this.drawInfo.y = args.drawY - (2 * this.drawInfo.height);
-            }
-            if (this.internalState.engaged) {
-                // return is meaningless here
-                let dist = distance_pos(this.position, player.position);
-                if (dist === 1 || Math.random() < 0.10) { // 10% chance of randomly attacking the air
-                    gameCycle.queue.push({
-                        actionType : "entityAttack",
-                        target: player,
-                        entity : this,
-                        weapon : this.weapon,
-                    });
-                } else {
-                    let path = generatePath(
-                        gameMap,
-                        tileTranslation,
-                        entities,
-                        [this.position.x, this.position.y],
-                        [player.position.x, player.position.y],
-                    ).slice(0, -1); // last element of path is player
-                    gameCycle.queue.push(...path.map((pathNode) => {
-                        return {
-                            actionType : "entityMove",
-                            position : pathNode,
-                            entity : this,
-                        }
-                    }).slice(0,getGameTurns(this)));
+        makeEngaged : makeEngaged,
+        updateFunction : enemyUpdate,
+    }
+}
+function idleConstructor(args, position) {
+    if (!("name" in args) ||
+        !("drawX" in args) ||
+        !("drawY" in args) ||
+        position.length !== 2
+    ) {
+        return false;
+    }
 
-                    // close enough for attack
-                    if (path.length <= (getGameTurns(this) - 2)) {
-                        gameCycle.queue.push({
-                            actionType : "entityAttack",
-                            target: player,
-                            entity : this,
-                            weapon : this.weapon,
-                        });
-                    }
-                }
-            } else {
-                if (
-                    this.internalState.alive && 
-                    distance(
-                        [this.position.x, this.position.y],
-                        [player.position.x, player.position.y]
-                    ) <= 3
-                ) {
-                    // start of engagement
-                    this.makeEngaged();
-                    return true;
-                }
-                return false; // never engaging
-            }
+    return {
+        name : args.name,
+        type : args.type ?? "idle",
+        drawInfo : {
+            x : args.drawX,
+            y : args.drawY,
+            originY : args.drawY,
+            width : args.drawWidth ?? 8,
+            height : args.drawHeight ?? 14,
         },
+        description: args.description ?? "You can't quite make out what it is.", 
+        position : pos_array_to_obj(position),
+        internalState : {
+            engaged : false,
+            alive : true,
+        },
+        updateFunction : () => false,
+    };
+}
+
+function makeEngaged() {
+    this.internalState.engaged = true;
+    this.drawInfo.y = this.drawInfo.originY - this.drawInfo.height;
+    console.log(this.name + " has been engaged");
+}
+
+function enemyUpdate(gameMap, tileTranslation, entities, gameCycle, player, tickCount) {
+    if (this.internalState.health <= 0 && this.internalState.alive) {
+        this.internalState.alive = false;
+        this.internalState.engaged = false;
+        this.drawInfo.y = this.drawInfo.originY - (2 * this.drawInfo.height);
+        return;
+    }
+    if (!this.internalState.alive) {
+        return;
+    }
+    if (this.internalState.engaged) {
+        // return is meaningless here
+        let dist = distance_pos(this.position, player.position);
+        if (dist === 1 || Math.random() < 0.10) { // 10% chance of randomly attacking the air
+            gameCycle.queue.push({
+                actionType : "entityAttack",
+                target: player,
+                entity : this,
+                weapon : this.weapon,
+            });
+        } else {
+            let path = generatePath(
+                gameMap,
+                tileTranslation,
+                entities,
+                [this.position.x, this.position.y],
+                [player.position.x, player.position.y],
+            ).slice(0, -1); // last element of path is player
+            gameCycle.queue.push(...path.map((pathNode) => {
+                return {
+                    actionType : "entityMove",
+                    position : pathNode,
+                    entity : this,
+                }
+            }).slice(0,getGameTurns(this)));
+
+            // close enough for attack
+            if (path.length <= (getGameTurns(this) - 2)) {
+                gameCycle.queue.push({
+                    actionType : "entityAttack",
+                    target: player,
+                    entity : this,
+                    weapon : this.weapon,
+                });
+            }
+        }
+    } else {
+        if (
+            this.internalState.alive && 
+            distance(
+                [this.position.x, this.position.y],
+                [player.position.x, player.position.y]
+            ) <= 3
+        ) {
+            // start of engagement
+            this.makeEngaged();
+            return true;
+        }
+        return false; // never engaging
     }
 }
 
@@ -138,6 +174,13 @@ function combatTurn(attacker, attackerWeapon, defender) {
         return "critical";
     }
     return "hit";
+}
+
+function pos_array_to_obj(arr) {
+    return {
+        x : arr[0],
+        y : arr[1],
+    };
 }
 
 function distance_pos(a, b) {
@@ -240,6 +283,7 @@ export {
     generatePath,
     eq_coord,
     enemyConstructor,
+    idleConstructor,
     generateEntityCombatScore,
     generatePlayerCombatScore,
     getGameTurns,

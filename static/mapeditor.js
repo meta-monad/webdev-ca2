@@ -153,6 +153,7 @@ function change(event) {
 function click(event) {
     event.preventDefault();
     let coords = getMouseTile(camera, canvas.width, tileWidth, tileHeight);
+    console.debug(`Clicked at the tile at: ${coords}`);
     try {
         gameMap[coords[0]][coords[1]] = tile;
     } catch {

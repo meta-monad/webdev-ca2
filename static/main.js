@@ -23,6 +23,7 @@ let player = {
         agility: 5,
     },
     activeWeapon : 0,
+    experience : 0,
     inventory : [
         {
             type : "weapon",
@@ -72,6 +73,7 @@ let path = [];
 // fps
 // let now;
 let then = Date.now();
+let request_id;
 const fpsInterval = 1000 / 30; // 30 frames per 1000 milliseconds
 let gameTickCounter = 0;
 
@@ -138,10 +140,13 @@ let UIElems = [
             if (gameMode === "Combat") {
                 return `Health: ${player.health}\n` + 
                     `Actions: ${gameCycle.capacity}\n` +
-                    `State: ${gameMode}`;
+                    `State: ${gameMode}\n` +
+                    `XP: ${player.experience}`;
             } else {
                 return `Health: ${player.health}\n` + 
-                    `State: ${gameMode}`;
+                    `State: ${gameMode}\n` +
+                    `XP: ${player.experience}`
+                    ;
             }
         },
         x: 12,
@@ -239,7 +244,7 @@ function game_init() {
 
 
 function draw() {
-    window.requestAnimationFrame(draw);
+    request_id = window.requestAnimationFrame(draw);
 
     // fps limiter
     let now = Date.now();
@@ -311,6 +316,7 @@ function draw() {
                 } else if (!playerMoved || (playerMoved && playerScore >= combatScore)) {
                     entity.updateFunction(gameMap, tileTranslation, entities, gameCycle, player, gameTickCounter);
                     if (!entity.internalState.alive) {
+                        player.experience += entity.internalState.maxHealth;
                         combatQueue = combatQueue.filter((element) => 
                             element[0] != entity_index
                         );
@@ -321,7 +327,7 @@ function draw() {
                     }
                 }
             }
-            
+
             if (!playerCombatTurn) {
                 playerMoved = false;
             }
@@ -341,7 +347,9 @@ function draw() {
             saveGameState(player);
         }
     } else if (gameTickCounter % 3 === 0 && playerCombatTurn) {
-        processPlayerActions();
+        if (processPlayerActions()) {
+            return;
+        }
     }
 
     /// rendering
@@ -373,6 +381,49 @@ function draw() {
     
     // camera
     processCamera(camera);
+}
+
+function stop() {
+    window.cancelAnimationFrame(request_id);
+    canvas.removeEventListener("mouseup", mouseup, false);
+    canvas.removeEventListener("contextmenu", (e) => e.preventDefault(), false);
+    window.removeEventListener("mousemove", mousemove, false);
+    window.removeEventListener("keyup", keyup, false);
+    window.removeEventListener("keydown", keydown, false);
+
+    // draw end screen card
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "#707070"; 
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.font = "30px \"CourierPrime\"";
+    context.fillStyle = "white";
+    let text = "Game over";
+    let textWidth = context.measureText(text).width;
+    context.fillText(
+        text,
+        ((canvas.width - textWidth) / 2),
+        ((canvas.height - 30) / 2),
+    );
+
+    text = "Your journey ends here.";
+    context.font = "20px \"CourierPrime\"";
+    textWidth = context.measureText(text).width;
+    context.fillText(
+        text,
+        ((canvas.width - textWidth) / 2),
+        ((canvas.height - 20) / 2) + 30,
+    );
+    
+    text = `Total XP: ${player.experience}`;
+    context.font = "20px \"CourierPrime\"";
+    textWidth = context.measureText(text).width;
+    context.fillText(
+        text,
+        ((canvas.width - textWidth) / 2),
+        ((canvas.height - 20) / 2) + 50,
+    );
+
 }
 
 function processPlayerActions() {
@@ -462,7 +513,11 @@ function processPlayerActions() {
             default:
                 console.warn("unknown action type in game cycle: ", action);
         }
-    }
+        if (player.health <= 0) {
+            stop();
+            return true;
+        }
+}
     if (gameCycle.capacity === 0) {
         playerCombatTurn = false;
     }
@@ -578,7 +633,7 @@ function mouseup(event) {
                         if (gameMode !== "Combat" && target.internalState.alive) {
                             gameMode = "Combat";
                             playerCombatTurn = true;
-                            target.internalState.makeEngaged();
+                            target.makeEngaged();
                             gameCycle.capacity = getGameTurns(player) - 1;
                             gameCycle.queue = [];
                             let combatScore = generateEntityCombatScore(target);

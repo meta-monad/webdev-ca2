@@ -394,11 +394,13 @@ function drawUI(context, UIElems, canvasWidth, canvasHeight) {
                 let line = 0;
 
                 while (words.length) {
+                    let lineEnd = false;
                     let currentWord = words.shift();
                     if (currentWord.includes('\n')) {
                         let newWords = currentWord.split('\n');
                         currentWord = newWords[0];
                         words.unshift(...newWords.splice(1));
+                        lineEnd = true;
                     }
                     if (context.measureText(currentLine + " " + currentWord).width < UIElement.referenceWidth) {
                         currentLine += " " + currentWord;
@@ -408,8 +410,12 @@ function drawUI(context, UIElems, canvasWidth, canvasHeight) {
                             x,
                             y + (line * lineOffset)
                         );
-                        line += 1;
+                        lineEnd = true;
                         currentLine = currentWord;
+                    }
+
+                    if (lineEnd) {
+                        line += 1;
                     }
                 }
                 // render the last remaining line

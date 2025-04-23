@@ -7,6 +7,33 @@ def json_helper(obj):
     else:
         return str(obj)
 
+def make_tree(x, y):
+    return {
+            "constructor" : "idle",
+            "position" : [x,y],
+            "args" : {
+                "name" : "oak tree",
+                "description" : "a large oak tree. Its trunk gently swaying in the wind as it reaches up into the sky.",
+                "drawX" : 16,
+                "drawY" : 482,
+                "drawHeight" : 30,
+            }
+        }
+
+def make_crawler(x, y):
+    return {
+            "constructor" : "enemy",
+            "position" : [x,y],
+            "args" : {
+                "name" : "crawler",
+                "description" : "an ugly green blob with a hard cap covering its head.",
+                "attackPoints" : 3,
+                "drawX" : 8,
+                "drawY" : 502,
+                "drawHeight" : 10,
+            }
+    }
+
 class Player:
     def __init__(self, x, y, last_update, endurance, perception, agility, health, maxHealth = 10):
         self.description = """You look at yourself. Standing all alone in this barren wasteland. Will you ever make it?"""

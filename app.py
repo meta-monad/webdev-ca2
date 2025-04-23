@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_session import Session
 
-from game import Player, make_response
+from game import Player, make_response, make_tree, make_crawler
 from global_state import GlobalState
 from database import get_db, close_db
 from datetime import datetime
@@ -164,16 +164,24 @@ def begin_session():
     lookFor = ""
     spawn = [0, 0]
     game_map = []
+    trees = []
     for line in lines:
         line = line.strip()
-        if lookFor == "spawn":
+        if line == "end":
+            lookFor = ""
+        elif lookFor == "spawn":
             spawn = [int(pos) for pos in line.split(' ')]
             lookFor = ""
         elif lookFor == "map":
             row = [int(tile) for tile in line.split(' ')]
             game_map.append(row)
+        elif lookFor == "trees":
+            tree_pos = [int(pos) for pos in line.split(' ')]
+            trees.append(tree_pos)
         elif line == "spawn":
             lookFor = "spawn"
+        elif line == "trees":
+            lookFor = "trees"
         elif line == "map":
             lookFor = "map"
 
@@ -195,37 +203,25 @@ def begin_session():
                 endurance,
                 perception,
                 agility,
-                endurance,
-                endurance
+                5 + endurance,
+                5 + endurance
         )
+        entities = [
+               make_crawler(5,0), 
+               make_crawler(5,5), 
+               make_crawler(1,8), 
+               make_crawler(11,11), 
+               make_crawler(12,3), 
+               make_crawler(18,4), 
+        ]
+        for tree_pos in trees:
+            tree = make_tree(tree_pos[0], tree_pos[1])
+            entities.append(tree)
+
         new_game = {
             "player" : player,
             "gameMap" : game_map,
-            "entities" : [
-                {
-                    "constructor" : "enemy",
-                    "position" : [5,0],
-                    "args" : {
-                        "name" : "crawler",
-                        "description" : "an ugly green blob with a hard cap covering its head.",
-                        "attackPoints" : 3,
-                        "drawX" : 8,
-                        "drawY" : 502,
-                        "drawHeight" : 10,
-                    }
-                },
-                {
-                    "constructor" : "idle",
-                    "position" : [0,2],
-                    "args" : {
-                        "name" : "oak tree",
-                        "description" : "a large oak tree. Its trunk gently swaying in the wind as it reaches up into the sky.",
-                        "drawX" : 16,
-                        "drawY" : 482,
-                        "drawHeight" : 30,
-                    }
-                },
-            ]
+            "entities" : entities,
         }
         if user:
             g.gamesessions[user["username"]] = new_game

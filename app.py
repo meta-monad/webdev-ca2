@@ -150,8 +150,11 @@ def begin_session():
                     "constructor" : "enemy",
                     "position" : [5,0],
                     "args" : {
-                        "name" : "boogoo",
-                        "attackPoints" : 5
+                        "name" : "crawler",
+                        "attackPoints" : 3,
+                        "drawX" : 8,
+                        "drawY" : 502,
+                        "drawHeight": 10,
                     }
                 }
             ]

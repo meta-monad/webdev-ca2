@@ -11,11 +11,12 @@ function enemyConstructor(args, position) {
         name : args.name,
         type : args.type ?? "enemy",
         drawInfo : {
-            width : 8,
-            height : 14,
-            fillColor : "green",
+            x : args.drawX,
+            y : args.drawY,
+            width : args.drawWidth ?? 8,
+            height : args.drawHeight ?? 14,
         },
-        description : "An ugly green blob.",
+        description : "An ugly green blob with a hard cap covering its head.",
         position : {
             x: position[0],
             y: position[1],
@@ -40,14 +41,14 @@ function enemyConstructor(args, position) {
         },
         makeEngaged : function () {
             this.internalState.engaged = true;
-            this.drawInfo.fillColor = "fuchsia";
-            console.log(this.name, " has been engaged");
+            this.drawInfo.y = args.drawY - this.drawInfo.height;
+            console.log(this.name + " has been engaged");
         },
         updateFunction : function (gameMap, tileTranslation, entities, gameCycle, player, tickCount) { // -> Option<Bool>
             if (this.internalState.health <= 0) {
                 this.internalState.alive = false;
                 this.internalState.engaged = false;
-                this.drawInfo.fillColor = "grey";
+                this.drawInfo.y = args.drawY - (2 * this.drawInfo.height);
             }
             if (this.internalState.engaged) {
                 // return is meaningless here

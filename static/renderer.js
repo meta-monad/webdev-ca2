@@ -23,23 +23,68 @@ const tileTranslation = [
     // 2
     {
         x : 32,
+        y : 16,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : true,
+        description : "Flat land. Nothing out of the ordinary.",
+    },
+    // 3
+    {
+        x : 64,
+        y : 16,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : true,
+        description : "Flat land. Nothing out of the ordinary.",
+    },
+    // 4
+    {
+        x : 0,
         y : 32,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false,
+        description : "Edge of the water. It is lined with a thick carpet of algae... Or something similar.",
+    },
+    // 5
+    {
+        x : 32,
+        y : 32,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false,
+        description : "Edge of the water. It is lined with a thick carpet of algae... Or something similar.",
+    },
+    // 6
+    {
+        x : 64,
+        y : 32,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false,
+        description : "Edge of the water. It is lined with a thick carpet of algae... Or something similar.",
+    },
+    // 7
+    {
+        x : 32,
+        y : 32,
+        width : tileWidth,
+        height : tileHeight,
+        traversable : false,
+        description : "The surface of a pond. Its surface is slightly swirling. You wonder what's beneath.",
+    },
+    // 8
+    {
+        x : 0,
+        y : 48,
         width : tileWidth,
         height : tileHeight * 2,
         displacement : -tileHeight,
         traversable : true,
         description : "A perfectly flat wall. It might be good cover.",
     },
-    // 3
-    {
-        x : 0,
-        y : 32,
-        width : tileWidth,
-        height : tileHeight * 2,
-        traversable : true,
-        description : "An edge. I should be careful around it.",
-    },
-    // 4
+    // 9
     {
         x : 32,
         y : 0,
@@ -47,7 +92,7 @@ const tileTranslation = [
         height : tileHeight,
         traversable : false
     },
-    // 5
+    // 10
     {
         x : 64,
         y : 0,
@@ -55,7 +100,7 @@ const tileTranslation = [
         height : tileHeight,
         traversable : false
     },
-    // 6
+    // 11
     {
         x : 96,
         y : 0,
@@ -87,12 +132,13 @@ function drawMap(context, camera, gameMap, tileTranslation, spriteMap, tileWidth
     }
 }
 
-function drawEntities(context, camera, entities, tileWidth, tileHeight, canvasWidth) {
+function drawEntities(context, camera, spriteMap, entities, tileWidth, tileHeight, canvasWidth) {
     for (const entity of entities) {
         switch (entity.type) {
             case "enemy":
-                context.fillStyle = entity.drawInfo.fillColor;
-                context.fillRect(
+                context.drawImage(
+                    spriteMap,
+                    entity.drawInfo.x, entity.drawInfo.y, entity.drawInfo.width, entity.drawInfo.height,
                     0.5 * ( canvasWidth - entity.drawInfo.width * camera.tileScale) + 0.5 * ( entity.position.y - entity.position.x ) * tileWidth * camera.tileScale,
                     0.5 * tileHeight * camera.tileScale + 0.5 * ( entity.position.y + entity.position.x ) * tileHeight * camera.tileScale - entity.drawInfo.height * camera.tileScale,
                     entity.drawInfo.width * camera.tileScale,
@@ -105,13 +151,14 @@ function drawEntities(context, camera, entities, tileWidth, tileHeight, canvasWi
     }
 }
 
-function drawPlayer(context, camera, player, tileWidth, tileHeight, canvasWidth) {
-    context.fillStyle = "red";
-    context.fillRect(
-        0.5 * ( canvasWidth - player.width * camera.tileScale) + 0.5 * ( player.position.y - player.position.x ) * tileWidth * camera.tileScale,
-        0.5 * tileHeight * camera.tileScale + 0.5 * ( player.position.y + player.position.x ) * tileHeight * camera.tileScale - player.height * camera.tileScale,
-        player.width * camera.tileScale,
-        player.height * camera.tileScale
+function drawPlayer(context, camera, spriteMap, player, tileWidth, tileHeight, canvasWidth) {
+    context.drawImage(
+        spriteMap,
+        player.drawInfo.x, player.drawInfo.y, player.drawInfo.width, player.drawInfo.height,
+        0.5 * ( canvasWidth - player.drawInfo.width * camera.tileScale) + 0.5 * ( player.position.y - player.position.x ) * tileWidth * camera.tileScale,
+        0.5 * tileHeight * camera.tileScale + 0.5 * ( player.position.y + player.position.x ) * tileHeight * camera.tileScale - player.drawInfo.height * camera.tileScale,
+        player.drawInfo.width * camera.tileScale,
+        player.drawInfo.height * camera.tileScale
     );
 }
 
@@ -154,13 +201,13 @@ function drawSelection(context, camera, gameMap, tileTranslation, spriteMap, cur
     let tile;
     switch (cursorMode) {
         case "Move":
-            tile = tileTranslation[4];
+            tile = tileTranslation[9];
             break;
         case "Info":
-            tile = tileTranslation[5];
+            tile = tileTranslation[10];
             break;
         case "Attack":
-            tile = tileTranslation[6];
+            tile = tileTranslation[11];
             break;
         default:
             console.warn("No interpret on selectionMode");

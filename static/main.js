@@ -11,9 +11,13 @@ let player = {
         x: null,
         y: null
     },
-    width : 8,
-    height : 16,
-    attributes : { // TODO
+    drawInfo : {
+        x: 0,
+        y: 496, // 512 - 16
+        width : 8, 
+        height : 16,
+    },
+    attributes : {
         endurance : 5,
         perception : 5,
         agility: 5,
@@ -39,13 +43,13 @@ let player = {
 };
 let camera = {
     x : 0,
-    y : 0,
+    y : 16,
     moveLeft : false,
     moveRight : false,
     moveUp : false,
     moveDown : false,
     speed : 10,
-    tileScale : 1,
+    tileScale : 2,
     mouseX : null,
     mouseY : null,
 };
@@ -178,6 +182,11 @@ function game_init() {
         player.description = response.player.description;
         player.health = response.player.health;
         player.maxHealth = response.player.maxHealth;
+        player.attributes = {
+            endurance: endurance,
+            perception: perception,
+            agility: agility,
+        };
         gameMap = response.gameMap;
 
         // process entities
@@ -347,10 +356,10 @@ function draw() {
     drawSelection(context, camera, gameMap, tileTranslation, spriteMap, cursorMode, canvas.width, tileWidth, tileHeight);
 
     // draw entities
-    drawEntities(context, camera, entities, tileWidth, tileHeight, canvas.width);
-    // player
+    drawEntities(context, camera, spriteMap, entities, tileWidth, tileHeight, canvas.width);
 
-    drawPlayer(context, camera, player, tileWidth, tileHeight, canvas.width);
+    // player
+    drawPlayer(context, camera, spriteMap, player, tileWidth, tileHeight, canvas.width);
 
     context.restore();
 

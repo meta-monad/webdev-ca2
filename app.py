@@ -165,6 +165,7 @@ def begin_session():
     spawn = [0, 0]
     game_map = []
     trees = []
+    crawlers = []
     for line in lines:
         line = line.strip()
         if line == "end":
@@ -178,10 +179,15 @@ def begin_session():
         elif lookFor == "trees":
             tree_pos = [int(pos) for pos in line.split(' ')]
             trees.append(tree_pos)
+        elif lookFor == "crawlers":
+            pos = [int(pos) for pos in line.split(' ')]
+            crawlers.append(pos)
         elif line == "spawn":
             lookFor = "spawn"
         elif line == "trees":
             lookFor = "trees"
+        elif line == "crawlers":
+            lookFor = "crawlers"
         elif line == "map":
             lookFor = "map"
 
@@ -206,17 +212,13 @@ def begin_session():
                 5 + endurance,
                 5 + endurance
         )
-        entities = [
-               make_crawler(5,0), 
-               make_crawler(5,5), 
-               make_crawler(1,8), 
-               make_crawler(11,11), 
-               make_crawler(12,3), 
-               make_crawler(18,4), 
-        ]
+        entities = []
         for tree_pos in trees:
             tree = make_tree(tree_pos[0], tree_pos[1])
             entities.append(tree)
+        for crawler_pos in crawlers:
+            crawler = make_crawler(crawler_pos[0], crawler_pos[1])
+            entities.append(crawler)
 
         new_game = {
             "player" : player,

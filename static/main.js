@@ -152,6 +152,21 @@ let UIElems = [
         x: 12,
         y: -4,
     },
+    {
+        type : "text",
+        color : "black",
+        origin: "BR", // bottom right
+        referenceWidth : 91,
+        referenceHeight : 108,
+        x: 12,
+        y: -4,
+        contents : () => {
+            return player.inventory[player.activeWeapon].name;
+        },
+        onClick : () => {
+            console.log("I have been clicked.");
+        }
+    }
 ];
 
 // this is actually a reference
@@ -657,6 +672,10 @@ function mouseup(event) {
             let modeIndex = cursorModes.indexOf(cursorMode);
             if (modeIndex !== -1) {
                 cursorMode = cursorModes[(modeIndex + 1) % cursorModes.length];
+            }
+            if (modeIndex === 2) {
+                player.activeWeapon += 1
+                player.activeWeapon %= player.inventory.filter(item => item.type === "weapon").length;
             }
             break;
     } 

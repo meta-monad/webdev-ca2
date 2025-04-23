@@ -182,13 +182,14 @@ function game_init() {
     data.append("agility", agility);
 
     makeRequest("./begin_session", data, (response) => {
-        console.log(response);
+        console.debug(response);
 
         player.position.x = response.player.x;
         player.position.y = response.player.y;
         player.description = response.player.description;
         player.health = response.player.health;
         player.maxHealth = response.player.maxHealth;
+        player.experience = response.player.experience;
         player.attributes = {
             endurance: endurance,
             perception: perception,
@@ -199,7 +200,6 @@ function game_init() {
         // process entities
         for (let entity of response.entities) {
             let state;
-            console.log("entity: ", entity);
             switch (entity.constructor) {
                 case "enemy":
                     state = enemyConstructor(entity.args, entity.position);

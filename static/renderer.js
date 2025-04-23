@@ -410,12 +410,18 @@ function drawUI(context, UIElems, canvasWidth, canvasHeight) {
                             x,
                             y + (line * lineOffset)
                         );
-                        lineEnd = true;
+                        line += 1;
                         currentLine = currentWord;
                     }
 
                     if (lineEnd) {
+                        context.fillText(
+                            currentLine,
+                            x,
+                            y + (line * lineOffset)
+                        );
                         line += 1;
+                        currentLine = words.shift();
                     }
                 }
                 // render the last remaining line

@@ -250,9 +250,10 @@ def set_state():
         x = int(request.form["x"])
         y = int(request.form["y"])
         hp = int(request.form["HP"])
+        xp = int(request.form["XP"])
         
         player = session["player"]
-        player.update(x, y, hp) 
+        player.update(x, y, hp, xp) 
         session["player"] = player
         session.modified = True
 

@@ -35,7 +35,7 @@ def make_crawler(x, y):
     }
 
 class Player:
-    def __init__(self, x, y, last_update, endurance, perception, agility, health, maxHealth = 10):
+    def __init__(self, x, y, last_update, endurance, perception, agility, health, maxHealth = 10, experience = 0):
         self.description = """You look at yourself. Standing all alone in this barren wasteland. Will you ever make it?"""
         self.x = x
         self.y = y
@@ -45,11 +45,13 @@ class Player:
         self.agility = agility
         self.health = health
         self.maxHealth = maxHealth
+        self.experience = experience
 
-    def update(self, x, y, health):
+    def update(self, x, y, health, experience):
         self.x = x
         self.y = y
         self.health = health
+        self.experience = experience
 
     def __eq__(self, other):
         return self.player_name == other.player_name
